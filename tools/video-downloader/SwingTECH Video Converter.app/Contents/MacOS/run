@@ -1,0 +1,161 @@
+#!/bin/bash
+#
+# SwingTECH Video Converter — native macOS app
+# --------------------------------------------
+# Double-click the app, paste YouTube links into the dialog, and it saves
+# phone-friendly .mp4 files to your Movies folder. On first launch it quietly
+# downloads its own conversion engine (yt-dlp + ffmpeg) into the app's support
+# folder — no Homebrew, no Terminal, no third-party websites required.
+#
+# Only convert content you have the right to keep and share (your own videos,
+# Creative Commons, or material you're licensed to use as a coaching reference).
+
+set -u
+
+APP_NAME="SwingTECH Video Converter"
+SUPPORT="$HOME/Library/Application Support/$APP_NAME"
+BIN="$SUPPORT/bin"
+OUT="$HOME/Movies/SwingTECH Videos"
+LOG="$SUPPORT/last-run.log"
+
+YTDLP_URL="https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos"
+FFSTATIC_BASE="https://github.com/eugeneware/ffmpeg-static/releases/latest/download"
+
+/bin/mkdir -p "$BIN" "$OUT"
+
+# ---------------------------------------------------------------------------
+# Native dialog helpers (messages passed via env var to avoid quoting issues)
+# ---------------------------------------------------------------------------
+notify() {
+  ST_MSG="$1" /usr/bin/osascript -e \
+    'display notification (system attribute "ST_MSG") with title "SwingTECH Video Converter"' \
+    >/dev/null 2>&1
+}
+
+alert() {
+  ST_MSG="$1" /usr/bin/osascript -e \
+    'display dialog (system attribute "ST_MSG") with title "SwingTECH Video Converter" buttons {"OK"} default button "OK" with icon note' \
+    >/dev/null 2>&1
+}
+
+errbox() {
+  ST_MSG="$1" /usr/bin/osascript -e \
+    'display dialog (system attribute "ST_MSG") with title "SwingTECH Video Converter" buttons {"OK"} default button "OK" with icon stop' \
+    >/dev/null 2>&1
+}
+
+ask_links() {
+  ST_MSG="$1" /usr/bin/osascript -e 'try
+    set r to display dialog (system attribute "ST_MSG") default answer "" with title "SwingTECH Video Converter" buttons {"Cancel", "Convert"} default button "Convert"
+    return text returned of r
+  on error number -128
+    return "___CANCEL___"
+  end try' 2>/dev/null
+}
+
+result_dialog() {
+  ST_MSG="$1" /usr/bin/osascript -e 'try
+    set r to display dialog (system attribute "ST_MSG") with title "SwingTECH Video Converter" buttons {"Done", "Show in Finder", "Convert More"} default button "Show in Finder"
+    return button returned of r
+  on error number -128
+    return "Done"
+  end try' 2>/dev/null
+}
+
+# ---------------------------------------------------------------------------
+# Make a downloaded binary runnable: strip quarantine, and if it won't launch
+# (Apple Silicon requires a valid signature), apply an ad-hoc signature.
+# ---------------------------------------------------------------------------
+make_runnable() {
+  local b="$1"
+  /bin/chmod +x "$b" 2>/dev/null
+  /usr/bin/xattr -d com.apple.quarantine "$b" 2>/dev/null || true
+  if "$b" -version >/dev/null 2>&1 || "$b" --version >/dev/null 2>&1; then return 0; fi
+  /usr/bin/codesign --force --sign - "$b" >/dev/null 2>&1 || true
+  if "$b" -version >/dev/null 2>&1 || "$b" --version >/dev/null 2>&1; then return 0; fi
+  return 1
+}
+
+# ---------------------------------------------------------------------------
+# First-run setup: download the conversion engine for this Mac's chip.
+# ---------------------------------------------------------------------------
+setup_engine() {
+  local arch ff fp
+  arch="$(/usr/bin/uname -m)"
+  if [ "$arch" = "arm64" ]; then
+    ff="ffmpeg-darwin-arm64"; fp="ffprobe-darwin-arm64"
+  else
+    ff="ffmpeg-darwin-x64"; fp="ffprobe-darwin-x64"
+  fi
+
+  notify "Setting up (one-time, about a minute)…"
+  /usr/bin/curl -fsSL --retry 3 -o "$BIN/yt-dlp"  "$YTDLP_URL"        || return 1
+  /usr/bin/curl -fsSL --retry 3 -o "$BIN/ffmpeg"  "$FFSTATIC_BASE/$ff" || return 1
+  /usr/bin/curl -fsSL --retry 3 -o "$BIN/ffprobe" "$FFSTATIC_BASE/$fp" || return 1
+
+  make_runnable "$BIN/yt-dlp"  || return 1
+  make_runnable "$BIN/ffmpeg"  || return 1
+  make_runnable "$BIN/ffprobe" || true   # ffprobe is helpful but not required
+  return 0
+}
+
+# ---------------------------------------------------------------------------
+# Run setup if the engine isn't installed (or a previous setup was incomplete)
+# ---------------------------------------------------------------------------
+if [ ! -x "$BIN/yt-dlp" ] || [ ! -x "$BIN/ffmpeg" ]; then
+  alert "Welcome! The first time you open this, it needs about a minute to set itself up (it downloads its conversion engine). Click OK, then wait for the \"Ready\" message before pasting links."
+  if ! setup_engine; then
+    errbox "Setup couldn't finish. Please check your internet connection, then open the app again."
+    exit 1
+  fi
+  notify "Ready! Paste your YouTube links."
+fi
+
+# ---------------------------------------------------------------------------
+# Main loop: ask for links, convert each to a phone-friendly MP4
+# ---------------------------------------------------------------------------
+while true; do
+  links="$(ask_links "Paste one or more YouTube links. Separate multiple links with a space, then click Convert.")"
+  [ "$links" = "___CANCEL___" ] && exit 0
+
+  # Normalize whitespace, then split into an array.
+  links="$(printf '%s' "$links" | /usr/bin/tr '\t\n' '  ' | /usr/bin/tr -s ' ')"
+  links="${links# }"; links="${links% }"
+  if [ -z "$links" ]; then
+    alert "No link was entered. Try again, or click Cancel to quit."
+    continue
+  fi
+  read -ra urls <<< "$links"
+
+  total=${#urls[@]}; n=0; good=0; bad=0
+  : > "$LOG"
+  for url in "${urls[@]}"; do
+    n=$((n + 1))
+    notify "Converting $n of $total…"
+    if "$BIN/yt-dlp" \
+        --ffmpeg-location "$BIN" \
+        --no-playlist --no-overwrites --restrict-filenames --embed-metadata \
+        -f "bv*[vcodec^=avc1]+ba[ext=m4a]/bv*+ba/b" \
+        -S "res:1080,vcodec:h264,ext:mp4:m4a" \
+        --merge-output-format mp4 --remux-video mp4 \
+        -o "$OUT/%(title)s [%(id)s].%(ext)s" \
+        "$url" >> "$LOG" 2>&1; then
+      good=$((good + 1))
+    else
+      bad=$((bad + 1))
+    fi
+  done
+
+  if [ "$bad" -eq 0 ]; then
+    msg="Done! Converted $good video(s). They're saved in your Movies folder, in the \"SwingTECH Videos\" folder."
+  else
+    msg="Converted $good video(s). $bad could not be downloaded — they may be private, region-locked, or the link was mistyped. Anything that worked is in Movies → SwingTECH Videos."
+  fi
+
+  choice="$(result_dialog "$msg")"
+  case "$choice" in
+    "Show in Finder") /usr/bin/open "$OUT"; exit 0 ;;
+    "Convert More")   continue ;;
+    *)                exit 0 ;;
+  esac
+done

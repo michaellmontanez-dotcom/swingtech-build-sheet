@@ -1,101 +1,73 @@
-# SwingTECH Coaching Video Downloader
+# SwingTECH Video Converter
 
-A simple Mac tool to save YouTube videos as regular **`.mp4` files** you can
-share with the players you coach offline — AirDrop, USB stick, text, or email.
-No app required on their end; the files play on any phone, tablet, or computer.
+Save YouTube videos as regular **`.mp4` files** you can keep and share with the
+players you coach — offline, on any phone or computer, no app needed on their
+end.
 
-> **Please only download content you have the right to share** — your own
-> videos, Creative Commons clips, or material you're licensed to redistribute.
+There are two ways to use this, easiest first.
 
----
-
-## One-time setup (about 5 minutes)
-
-You need two free tools: **yt-dlp** (downloads the video) and **ffmpeg**
-(packages it into a phone-friendly file). The script can install them for you.
-
-1. Open the **Terminal** app (press `⌘ + Space`, type `Terminal`, hit Enter).
-2. If you don't already have **Homebrew** (a Mac app installer), paste this in
-   and press Enter, then follow the prompts:
-
-   ```
-   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-   ```
-
-3. That's it. The first time you run the downloader, it will offer to install
-   `yt-dlp` and `ffmpeg` automatically — just answer **Y**.
+> **Please only convert content you have the right to keep and share** — your
+> own videos, Creative Commons clips, or material you're licensed to use as a
+> coaching reference.
 
 ---
 
-## How to use it — the easy way (double-click)
+## ⭐ The app (recommended — no Terminal, no Homebrew, no websites)
 
-1. In Finder, open this `video-downloader` folder.
-2. Double-click **`Download Videos.command`**.
-   - *First time only:* macOS may say it's from an unidentified developer.
-     If so, **right-click** the file → **Open** → **Open**. You won't be asked
-     again after that.
-3. A window opens. Paste one YouTube link per line, and press **Enter on an
-   empty line** when you're done.
-4. The videos download into the **`Coaching-Videos`** folder, which opens
-   automatically in Finder when finished.
+**`SwingTECH Video Converter.app`** is a normal Mac app. The first time you open
+it, it spends about a minute quietly downloading its own conversion engine into
+itself — after that it just works.
 
-That's it — no commands to type. (The very first run still installs the two
-free tools; just answer **Y** when asked.)
+### Install it (once)
+1. Drag **`SwingTECH Video Converter.app`** into your **Applications** folder
+   (or anywhere you like — the Desktop is fine too).
+2. **First open:** right-click (or Control-click) the app → **Open** → **Open**.
+   macOS asks this once for any app it didn't download from the App Store; after
+   that you can open it normally by double-clicking.
 
-## How to use it — the command-line way (optional)
+### Use it
+1. Double-click the app.
+2. The **first time only**, click **OK** on the welcome message and wait for the
+   **"Ready"** notification (about a minute — it's setting itself up).
+3. Paste one or more YouTube links into the box. Separate multiple links with a
+   space. Click **Convert**.
+4. When it's done, click **Show in Finder** to see your videos.
 
-1. In Terminal, go to this folder. The easiest way:
-   type `cd ` (with a space), then drag this `video-downloader` folder from
-   Finder onto the Terminal window, and press Enter.
+### Where your videos go
+Your **Movies** folder, in a folder called **`SwingTECH Videos`**. They're
+H.264 MP4 files (up to 1080p) that play anywhere. Share them however you like —
+AirDrop, text, email, USB.
 
-2. Run:
+---
 
-   ```
-   ./download.sh
-   ```
+## Troubleshooting the app
 
-3. Paste one YouTube link per line. When you're done, press **Enter on an
-   empty line**.
-
-4. The videos download into a **`Coaching-Videos`** folder, which pops open in
-   Finder automatically when it's finished. Share those `.mp4` files however
-   you like.
-
-### Shortcuts
-
-| What you want | Command |
+| What you see | What to do |
 |---|---|
-| Download specific links right away | `./download.sh "LINK1" "LINK2"` |
-| Save to a different folder | `./download.sh -o ~/Desktop/Lessons` |
-| Audio only (MP3) | `./download.sh -a` |
-| Help | `./download.sh --help` |
+| "unidentified developer" / won't open | Right-click the app → **Open** → **Open** (only needed the first time). |
+| "Setup couldn't finish" | Check your internet connection and open the app again. |
+| A link fails to convert | It may be private, region-locked, or mistyped. Confirm the link opens in your browser. |
+| Lots of links suddenly fail | YouTube changed something. Delete the folder `~/Library/Application Support/SwingTECH Video Converter` and reopen the app — it re-downloads a fresh, updated engine. |
+
+The app keeps a log of the last run at
+`~/Library/Application Support/SwingTECH Video Converter/last-run.log` if you
+ever need to see what happened.
 
 ---
 
-## What you get
+## Alternative: the command-line script
 
-- **Format:** H.264 MP4 (up to 1080p) — the most universally compatible video
-  format. Plays everywhere with no extra software.
-- **Filenames:** the video's title plus its ID, e.g.
-  `Perfect_Golf_Swing_Drill [dQw4w9WgXcQ].mp4`.
-- Already-downloaded videos are skipped, so you can safely re-run the same list.
-
----
-
-## Troubleshooting
-
-| Problem | Fix |
-|---|---|
-| A link fails to download | Run `brew upgrade yt-dlp` — YouTube changes things often and updates fix most issues. |
-| "Homebrew is not installed" | Run the Homebrew install command in the setup section above. |
-| Video is private / region-locked | The script can't access it; confirm the link opens in your browser. |
-| "permission denied" running the script | Run `chmod +x download.sh` once, then try again. |
+If you'd rather not use the app, `download.sh` does the same job from Terminal
+(it uses Homebrew to install `yt-dlp` + `ffmpeg`). See the comments at the top
+of that file, or run `./download.sh --help`. A double-clickable
+`Download Videos.command` is included for it too.
 
 ---
 
-## Why not just do this on the website?
+## Why a self-contained app?
 
-YouTube downloading can't run inside the SwingTECH web app: browsers and
-Vercel's servers are blocked from fetching YouTube's video streams, and the
-required tools (`yt-dlp`, `ffmpeg`) can't run there. Running it on your own Mac
-is the reliable, supported way to save videos for offline coaching.
+YouTube downloading can't run inside the SwingTECH website (browsers and
+Vercel's servers are blocked from fetching YouTube streams), and public
+download websites keep getting shut down. A small app that runs on your own Mac,
+carrying its own engine, is the reliable, private way to keep coaching videos
+for offline reference.
