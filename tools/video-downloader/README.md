@@ -27,7 +27,22 @@ You need two free tools: **yt-dlp** (downloads the video) and **ffmpeg**
 
 ---
 
-## How to use it
+## How to use it — the easy way (double-click)
+
+1. In Finder, open this `video-downloader` folder.
+2. Double-click **`Download Videos.command`**.
+   - *First time only:* macOS may say it's from an unidentified developer.
+     If so, **right-click** the file → **Open** → **Open**. You won't be asked
+     again after that.
+3. A window opens. Paste one YouTube link per line, and press **Enter on an
+   empty line** when you're done.
+4. The videos download into the **`Coaching-Videos`** folder, which opens
+   automatically in Finder when finished.
+
+That's it — no commands to type. (The very first run still installs the two
+free tools; just answer **Y** when asked.)
+
+## How to use it — the command-line way (optional)
 
 1. In Terminal, go to this folder. The easiest way:
    type `cd ` (with a space), then drag this `video-downloader` folder from
