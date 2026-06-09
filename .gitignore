@@ -2,3 +2,11 @@ node_modules/
 .vercel/
 .env
 .env.local
+
+# Downloaded coaching videos (don't commit media)
+tools/video-downloader/Coaching-Videos/
+*.mp4
+*.mkv
+*.webm
+*.mp3
+*.m4a
