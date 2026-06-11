@@ -128,6 +128,23 @@
     .drill b{color:var(--text);font-weight:600;white-space:nowrap}
     .drill .mins{margin-left:auto;color:var(--muted);font-size:0.75rem;white-space:nowrap}
 
+    /* ENTRY TABS + GHIN IMPORT */
+    .entry-tabs{display:flex;gap:4px;background:rgba(255,255,255,0.04);border-radius:10px;padding:3px;margin-bottom:16px;width:fit-content}
+    .entry-tab{background:transparent;border:none;color:var(--muted);cursor:pointer;padding:8px 16px;border-radius:8px;font-family:'Space Grotesk',sans-serif;font-size:0.78rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;transition:all 0.2s}
+    .entry-tab:hover{color:var(--text)}
+    .entry-tab.active{color:var(--accent-light);background:var(--accent-soft)}
+    .dropzone{border:2px dashed rgba(46,139,58,0.4);border-radius:14px;padding:34px 20px;text-align:center;cursor:pointer;transition:all 0.2s var(--ease);font-size:0.95rem}
+    .dropzone:hover,.dropzone.drag{border-color:var(--accent-light);background:var(--accent-soft)}
+    .dropzone span{display:block;margin-top:8px;font-size:0.78rem;color:var(--muted)}
+    .ghin-review-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+    @media(max-width:600px){.ghin-review-summary{grid-template-columns:1fr}}
+    .ghin-review table{width:100%;border-collapse:collapse;font-size:0.8rem;margin-top:6px}
+    .ghin-review th{text-align:left;text-transform:uppercase;letter-spacing:0.1em;font-size:0.6rem;color:var(--muted);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--border)}
+    .ghin-review td{padding:5px 8px;border-bottom:1px solid rgba(255,255,255,0.04)}
+    .ghin-review input,.ghin-review select{padding:5px 8px;font-size:0.8rem}
+    .ghin-review input[type=checkbox]{width:auto}
+    .ghin-badge{display:inline-flex;align-items:center;gap:6px;background:var(--gold-soft);border:1px solid rgba(240,177,92,0.3);color:var(--gold);border-radius:999px;padding:3px 12px;font-size:0.7rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase}
+
     .sessions-list{display:grid;gap:8px}
     .session-row{display:flex;gap:12px;align-items:center;font-size:0.85rem;color:rgba(255,255,255,0.78);background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:9px 12px}
     .session-row .d{color:var(--muted);font-size:0.75rem;min-width:78px}
@@ -208,7 +225,20 @@
   <div class="grid-2-even">
     <section class="card" id="logRound">
       <h2>Log a Round</h2>
-      <form onsubmit="addRound(event)">
+      <div class="entry-tabs">
+        <button type="button" class="entry-tab active" id="tabManual" onclick="setEntryMode('manual')">Enter Score</button>
+        <button type="button" class="entry-tab" id="tabGhin" onclick="setEntryMode('ghin')">Import GHIN Card</button>
+      </div>
+      <div id="ghinImport" style="display:none">
+        <div class="dropzone" id="dropzone" onclick="document.getElementById('ghinFile').click()">
+          📸 Snap or upload your USGA / GHIN handicap card
+          <span>Tap to choose a screenshot, drag &amp; drop it here, or just paste (Ctrl/⌘+V).<br/>The card is read on your device — official index and score history import automatically.</span>
+        </div>
+        <input type="file" id="ghinFile" accept="image/*" style="display:none" onchange="handleGhinFile(this.files[0]);this.value=''"/>
+        <div class="form-note" id="ocrStatus" style="margin-top:10px"></div>
+        <div class="ghin-review" id="ghinReview"></div>
+      </div>
+      <form id="manualForm" onsubmit="addRound(event)">
         <div class="form-grid">
           <div><label>Date</label><input type="date" id="rDate" required/></div>
           <div><label>Course</label><input type="text" id="rCourse" placeholder="Crescent Pointe GC"/></div>
@@ -264,7 +294,16 @@
         <tbody id="roundsBody"></tbody>
       </table>
     </div>
-    <div class="chart-empty" id="roundsEmpty" style="display:none">No rounds logged yet — your baseline index is 2.5 until your first scores come in.</div>
+    <div class="chart-empty" id="roundsEmpty" style="display:none"></div>
+    <div id="ghinHistoryWrap" style="display:none;margin-top:22px">
+      <h2 style="display:flex;align-items:center;gap:10px">GHIN Score History <span class="ghin-badge" id="ghinBadge"></span></h2>
+      <div style="overflow-x:auto">
+        <table class="rounds-table">
+          <thead><tr><th>Posted</th><th>Score</th><th>Type</th><th>Used in Index</th></tr></thead>
+          <tbody id="ghinHistoryBody"></tbody>
+        </table>
+      </div>
+    </div>
   </section>
 
   <!-- PLAN -->
@@ -284,6 +323,30 @@
 const PROFILE_ID = 'michael-montanez';
 const LS_KEY = 'stg_coaching';
 
+// Seeded from Michael's USGA/GHIN card (06/11/2026)
+const SEED_GHIN = {
+  number: '11562255',
+  club: 'USGA/Carolinas GC',
+  association: 'Carolinas Golf Association',
+  index: 2.5,
+  lowIndex: 1.8,
+  lowIndexDate: '2026-05-24',
+  scoresPosted: 11,
+  asOf: '2026-06-11',
+  history: [
+    {date:'06/26', score:79, flag:'H', used:false}, {date:'06/26', score:79, flag:'A', used:false},
+    {date:'05/26', score:76, flag:'H', used:true},  {date:'05/26', score:79, flag:'H', used:false},
+    {date:'05/26', score:77, flag:'A', used:false}, {date:'05/26', score:76, flag:'A', used:false},
+    {date:'05/26', score:77, flag:'H', used:false}, {date:'05/26', score:77, flag:'H', used:false},
+    {date:'04/26', score:37, flag:'N', used:true},  {date:'04/26', score:87, flag:'A', used:false},
+    {date:'03/26', score:38, flag:'N', used:true},  {date:'09/25', score:79, flag:'H', used:false},
+    {date:'07/25', score:37, flag:'N', used:true},  {date:'07/25', score:36, flag:'N', used:true},
+    {date:'07/25', score:77, flag:'H', used:true},  {date:'07/25', score:77, flag:'H', used:true},
+    {date:'07/25', score:78, flag:'H', used:false}, {date:'06/23', score:82, flag:'A', used:false},
+    {date:'05/23', score:93, flag:'A', used:false}, {date:'05/23', score:73, flag:'H', used:true}
+  ]
+};
+
 const DEFAULT_PROFILE = {
   player: {
     name: 'Michael Montanez',
@@ -294,6 +357,8 @@ const DEFAULT_PROFILE = {
     homeBase: 'Bluffton Studio'
   },
   settings: { weeklyRounds: 2, weeklyPractice: 4 },
+  ghin: JSON.parse(JSON.stringify(SEED_GHIN)),
+  indexLog: [{date:'2026-06-11', idx:2.5, source:'ghin'}], // official index readings over time
   rounds: [],    // {date, course, score, rating, slope, diff, putts, fw, gir, udMade, udTry}
   sessions: []   // {date, focus, mins, drill, notes}
 };
@@ -357,9 +422,24 @@ function indexFromDiffs(diffs){
   return Math.round((avg + adj) * 10) / 10;
 }
 function sortedRounds(){ return [...data.rounds].sort((a,b)=>a.date.localeCompare(b.date)); }
+// One timeline of index readings: start point, official GHIN imports, and values
+// computed from manually logged rounds. The most recent reading is "current".
+function indexTimeline(){
+  const pts = [{date: data.player.startDate, idx: data.player.startingIndex, source:'start'}];
+  const diffs = [];
+  for(const r of sortedRounds()){
+    diffs.push(r.diff);
+    const ix = indexFromDiffs(diffs);
+    if(ix !== null) pts.push({date:r.date, idx:ix, source:'round'});
+  }
+  for(const e of (data.indexLog || [])) pts.push({date:e.date, idx:e.idx, source:e.source||'ghin'});
+  pts.sort((a,b)=>a.date.localeCompare(b.date));
+  // drop consecutive duplicates (same date + value)
+  return pts.filter((p,i)=> i===0 || p.date!==pts[i-1].date || p.idx!==pts[i-1].idx);
+}
 function currentIndex(){
-  const idx = indexFromDiffs(sortedRounds().map(r=>r.diff));
-  return idx === null ? data.player.startingIndex : idx;
+  const pts = indexTimeline();
+  return pts[pts.length-1].idx;
 }
 
 // ---------- week + stats ----------
@@ -428,14 +508,15 @@ function drillsFor(focus){
 function nextStep(){
   const idx = currentIndex();
   const rounds = sortedRounds();
-  if(idx <= data.player.goalIndex && rounds.length >= 3){
+  const hasGhin = !!(data.ghin && data.ghin.index != null);
+  if(idx <= data.player.goalIndex && (rounds.length >= 3 || hasGhin)){
     return {title:'You did it — scratch golfer. 🏆',
       detail:'Your index is at or below 0.0. Keep the weekly cadence to hold it, and consider setting a plus-handicap goal.',
       actions:[], why:'Index ' + idx.toFixed(1) + ' ≤ goal 0.0.'};
   }
-  if(rounds.length === 0){
+  if(rounds.length === 0 && !hasGhin){
     return {title:'Log your most recent round to set your baseline.',
-      detail:'Your index starts at 2.5. Enter your last round below — score, course rating, slope, plus putts, fairways, greens and up-and-downs. Those stats tell the plan exactly where your strokes are leaking, and after 3 rounds your index starts computing for real.',
+      detail:'Your index starts at 2.5. Enter your last round below — score, course rating, slope, plus putts, fairways, greens and up-and-downs. Or import your USGA/GHIN card and your official index and score history load automatically. After 3 logged rounds the index computes for real.',
       actions:[{label:'Log a Round', href:'#logRound'}],
       why:'No rounds on file yet — everything starts from the baseline.'};
   }
@@ -444,8 +525,11 @@ function nextStep(){
   const wkRounds = thisWeek(data.rounds);
   if(wkSessions.length < data.settings.weeklyPractice){
     const drill = drillsFor(wf.focus)[wkSessions.length % drillsFor(wf.focus).length];
+    const tip = rounds.length === 0
+      ? ' Tip: when you play, log rounds here with putts, fairways, GIR and up-and-downs — that\'s what unlocks stat-driven coaching on top of your GHIN index.'
+      : '';
     return {title:`Practice block ${wkSessions.length+1} of ${data.settings.weeklyPractice}: ${drill.n}`,
-      detail:`${drill.d}${drill.m ? ` Budget ~${drill.m} minutes.` : ''} Focus area this week: ${FOCUS_LABELS[wf.focus]}. Log it below when you're done.`,
+      detail:`${drill.d}${drill.m ? ` Budget ~${drill.m} minutes.` : ''} Focus area this week: ${FOCUS_LABELS[wf.focus]}.${tip} Log it below when you're done.`,
       actions:[{label:'Log Practice', href:'#logPractice'}],
       why: wf.reason};
   }
@@ -470,8 +554,10 @@ function render(){
   const start = data.player.startingIndex, goal = data.player.goalIndex;
 
   document.getElementById('playerName').textContent = data.player.name;
+  const g = data.ghin;
+  const ghinBits = g ? ` · GHIN #${g.number} · official ${(+g.index).toFixed(1)} as of ${fmtDate(g.asOf)} · low index ${g.lowIndex != null ? (+g.lowIndex).toFixed(1) : '—'}` : '';
   document.getElementById('playerSub').textContent =
-    `${data.player.homeBase} · started ${fmtDate(data.player.startDate)} · ${data.rounds.length} round${data.rounds.length===1?'':'s'} logged`;
+    `${data.player.homeBase} · ${data.rounds.length} stat round${data.rounds.length===1?'':'s'} logged${ghinBits}`;
   document.getElementById('hcpNow').textContent = idx.toFixed(1);
   document.getElementById('hcpGoal').textContent = goal.toFixed(1);
 
@@ -496,22 +582,16 @@ function render(){
   renderChart();
   renderWeek();
   renderRounds();
+  renderGhinHistory();
   renderSessions();
   renderPhases();
 }
 
 function renderChart(){
-  const rounds = sortedRounds();
-  const pts = [{date:data.player.startDate, idx:data.player.startingIndex}];
-  const diffs = [];
-  for(const r of rounds){
-    diffs.push(r.diff);
-    const ix = indexFromDiffs(diffs);
-    pts.push({date:r.date, idx: ix===null ? data.player.startingIndex : ix});
-  }
+  const pts = indexTimeline();
   const wrap = document.getElementById('chartWrap');
-  if(rounds.length === 0){
-    wrap.innerHTML = '<div class="chart-empty">Your trend line starts at 2.5 and updates with every round you log.<br/>After 3 rounds the index computes from your differentials (best 8 of last 20).</div>';
+  if(pts.length <= 1){
+    wrap.innerHTML = '<div class="chart-empty">Your trend line starts at 2.5 and updates with every round you log or GHIN card you import.<br/>After 3 logged rounds the index also computes from your differentials (best 8 of last 20).</div>';
     return;
   }
   const W=560, H=220, padL=34, padR=14, padT=14, padB=24;
@@ -528,7 +608,11 @@ function renderChart(){
     <line x1="${padL}" x2="${W-padR}" y1="${y(0)}" y2="${y(0)}" stroke="rgba(240,177,92,0.55)" stroke-dasharray="5 4"/>
     <text x="${W-padR}" y="${y(0)-5}" fill="rgba(240,177,92,0.8)" font-size="9" text-anchor="end">GOAL · SCRATCH</text>
     <path d="${line}" fill="none" stroke="#3dbf4f" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
-    ${pts.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p.idx)}" r="3.4" fill="#0a0f0a" stroke="#3dbf4f" stroke-width="2"><title>${p.date} · ${p.idx.toFixed(1)}</title></circle>`).join('')}
+    ${pts.map((p,i)=>{
+      const stroke = p.source==='ghin' ? '#f0b15c' : '#3dbf4f';
+      const label = p.source==='ghin' ? ' (official GHIN)' : '';
+      return `<circle cx="${x(i)}" cy="${y(p.idx)}" r="3.4" fill="#0a0f0a" stroke="${stroke}" stroke-width="2"><title>${p.date} · ${p.idx.toFixed(1)}${label}</title></circle>`;
+    }).join('')}
   </svg>`;
 }
 
@@ -555,13 +639,32 @@ function renderWeek(){
 
 function renderRounds(){
   const rounds = sortedRounds().slice().reverse();
-  document.getElementById('roundsEmpty').style.display = rounds.length ? 'none' : 'block';
+  const empty = document.getElementById('roundsEmpty');
+  empty.style.display = rounds.length ? 'none' : 'block';
+  empty.textContent = data.ghin
+    ? `No stat rounds logged yet — your official GHIN index (${(+data.ghin.index).toFixed(1)}) is in charge until you log rounds here with full stats.`
+    : 'No rounds logged yet — your baseline index is 2.5 until your first scores come in.';
   document.getElementById('roundsBody').innerHTML = rounds.map(r=>`<tr>
     <td>${fmtDate(r.date)}</td><td>${esc(r.course)||'—'}</td><td><b>${r.score}</b></td>
     <td style="color:var(--accent-light)">${r.diff.toFixed(1)}</td>
     <td>${r.putts??'—'}</td><td>${r.fw!=null?r.fw+'/14':'—'}</td><td>${r.gir!=null?r.gir+'/18':'—'}</td>
     <td>${r.udTry?`${r.udMade}/${r.udTry}`:'—'}</td>
     <td><button class="btn-x" title="Delete round" onclick="deleteRound('${r.id}')">×</button></td>
+  </tr>`).join('');
+}
+
+const FLAG_LABELS = {H:'18-hole · Home', A:'18-hole · Away', N:'9-hole'};
+function renderGhinHistory(){
+  const wrap = document.getElementById('ghinHistoryWrap');
+  const g = data.ghin;
+  if(!g || !g.history || !g.history.length){ wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  document.getElementById('ghinBadge').textContent =
+    `GHIN #${g.number} · ${g.club || ''} · as of ${fmtDate(g.asOf)}`;
+  document.getElementById('ghinHistoryBody').innerHTML = g.history.map(h=>`<tr>
+    <td>${esc(h.date)}</td><td><b>${h.score}</b></td>
+    <td>${FLAG_LABELS[h.flag] || esc(h.flag)}</td>
+    <td>${h.used ? '<span style="color:var(--accent-light)">✓ used</span>' : '—'}</td>
   </tr>`).join('');
 }
 
@@ -642,6 +745,191 @@ function addSession(e){
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
+// ---------- GHIN CARD IMPORT (on-device OCR via tesseract.js) ----------
+function setEntryMode(mode){
+  document.getElementById('tabManual').classList.toggle('active', mode==='manual');
+  document.getElementById('tabGhin').classList.toggle('active', mode==='ghin');
+  document.getElementById('manualForm').style.display = mode==='manual' ? '' : 'none';
+  document.getElementById('ghinImport').style.display = mode==='ghin' ? '' : 'none';
+}
+
+let tesseractLoading = null;
+function loadTesseract(){
+  if(window.Tesseract) return Promise.resolve();
+  if(!tesseractLoading){
+    tesseractLoading = new Promise((res, rej)=>{
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+      s.onload = res;
+      s.onerror = ()=>{ tesseractLoading = null; rej(new Error('couldn\'t load the OCR library — check your connection')); };
+      document.head.appendChild(s);
+    });
+  }
+  return tesseractLoading;
+}
+
+function fileToImage(file){
+  return new Promise((res, rej)=>{
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = ()=>res(img);
+    img.onerror = ()=>rej(new Error('couldn\'t read that image file'));
+    img.src = url;
+  });
+}
+
+// Grayscale + upscale small screenshots so OCR has crisp glyphs to work with
+function preprocessCard(img){
+  const scale = img.width < 1400 ? Math.min(2, 1400 / img.width) : 1;
+  const c = document.createElement('canvas');
+  c.width = Math.round(img.width * scale);
+  c.height = Math.round(img.height * scale);
+  const ctx = c.getContext('2d');
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(img, 0, 0, c.width, c.height);
+  const d = ctx.getImageData(0, 0, c.width, c.height);
+  const px = d.data;
+  for(let i = 0; i < px.length; i += 4){
+    const gray = px[i]*0.299 + px[i+1]*0.587 + px[i+2]*0.114;
+    px[i] = px[i+1] = px[i+2] = gray;
+  }
+  ctx.putImageData(d, 0, 0);
+  return c;
+}
+
+function parseGhinText(text){
+  const t = text.replace(/[|]/g, ' ');
+  const grab = re => { const m = t.match(re); return m ? m[1].trim() : null; };
+  const indexStr = grab(/HANDICAP\s*INDEX[:\s]*([+\-]?\d{1,2}\.\d)/i);
+  const low = t.match(/LOW\s*HANDICAP\s*INDEX[:\s]*([+\-]?\d{1,2}\.\d)\s*\((\d{2})\/(\d{2})\/(\d{4})\)/i);
+  const cur = t.match(/CURRENT\s*DATE[:\s]*(\d{2})\/(\d{2})\/(\d{4})/i);
+  const scores = [];
+  const re = /(\d{2}\/\d{2})\s+(\d{2,3})\s*(\*?)\s*([HAN])\b/g;
+  let m;
+  while((m = re.exec(t))){
+    const sc = +m[2];
+    if(sc < 25 || sc > 130) continue; // OCR noise guard
+    scores.push({date:m[1], score:sc, used:m[3]==='*', flag:m[4]});
+  }
+  return {
+    name: grab(/NAME[:\s]*([^\n]+)/i),
+    club: grab(/CLUB[:\s]*([^\n]+)/i),
+    index: indexStr != null ? parseFloat(indexStr.replace('+','-')) : null, // GHIN "+1.2" = better than scratch
+    lowIndex: low ? parseFloat(low[1].replace('+','-')) : null,
+    lowIndexDate: low ? `${low[4]}-${low[2]}-${low[3]}` : null,
+    ghinNumber: grab(/GHIN\s*NUMBER[:\s]*(\d{5,})/i),
+    scoresPosted: grab(/SCORES\s*POSTED[^:\n]*[:\s]*(\d+)/i),
+    asOf: cur ? `${cur[3]}-${cur[1]}-${cur[2]}` : todayStr(),
+    scores
+  };
+}
+
+async function handleGhinFile(file){
+  if(!file) return;
+  setEntryMode('ghin');
+  const st = document.getElementById('ocrStatus');
+  document.getElementById('ghinReview').innerHTML = '';
+  try{
+    st.textContent = 'Loading OCR engine…';
+    await loadTesseract();
+    const img = await fileToImage(file);
+    st.textContent = 'Reading card…';
+    const result = await Tesseract.recognize(preprocessCard(img), 'eng', {
+      logger: m => { if(m.status === 'recognizing text') st.textContent = 'Reading card… ' + Math.round(m.progress*100) + '%'; }
+    });
+    const parsed = parseGhinText(result.data.text);
+    if(parsed.index == null && !parsed.scores.length){
+      st.textContent = 'Couldn\'t find handicap data in that image. Try a clearer, fuller screenshot of the GHIN card.';
+      return;
+    }
+    st.textContent = '';
+    showGhinReview(parsed);
+  }catch(err){
+    st.textContent = 'Import failed: ' + err.message;
+  }
+}
+
+function showGhinReview(p){
+  const rv = document.getElementById('ghinReview');
+  const field = (id, label, val) => `<div><label>${label}</label><input id="${id}" value="${esc(val ?? '')}"/></div>`;
+  rv.innerHTML = `
+    <div class="form-note" style="margin:14px 0 4px">Here's what I read off the card — fix anything that looks wrong, untick rows you don't want, then import.</div>
+    <div class="ghin-review-summary">
+      ${field('gvIndex','Handicap Index', p.index != null ? p.index.toFixed(1) : '')}
+      ${field('gvNumber','GHIN Number', p.ghinNumber)}
+      ${field('gvAsOf','As-of Date (YYYY-MM-DD)', p.asOf)}
+      ${field('gvClub','Club', p.club)}
+      ${field('gvLow','Low Index', p.lowIndex != null ? p.lowIndex.toFixed(1) : '')}
+      ${field('gvPosted','Scores Posted (this year)', p.scoresPosted)}
+    </div>
+    <table>
+      <thead><tr><th></th><th>Posted (MM/YY)</th><th>Score</th><th>Type</th><th>Used *</th></tr></thead>
+      <tbody>${p.scores.map((s,i)=>`<tr>
+        <td><input type="checkbox" id="gs${i}on" checked/></td>
+        <td><input id="gs${i}date" value="${esc(s.date)}" style="width:80px"/></td>
+        <td><input id="gs${i}score" type="number" value="${s.score}" style="width:70px"/></td>
+        <td><select id="gs${i}flag"><option value="H"${s.flag==='H'?' selected':''}>18 · Home</option><option value="A"${s.flag==='A'?' selected':''}>18 · Away</option><option value="N"${s.flag==='N'?' selected':''}>9-hole</option></select></td>
+        <td><input type="checkbox" id="gs${i}used"${s.used?' checked':''}/></td>
+      </tr>`).join('')}</tbody>
+    </table>
+    <div class="form-foot">
+      <button class="btn-primary" type="button" onclick="applyGhinImport(${p.scores.length})">Import to Profile</button>
+      <button class="btn-ghost" type="button" onclick="document.getElementById('ghinReview').innerHTML=''">Cancel</button>
+      <span class="form-note">${p.scores.length} score${p.scores.length===1?'':'s'} found</span>
+    </div>`;
+}
+
+function applyGhinImport(count){
+  const v = id => document.getElementById(id).value.trim();
+  const idxStr = v('gvIndex');
+  const index = idxStr === '' ? null : parseFloat(idxStr);
+  const asOf = /^\d{4}-\d{2}-\d{2}$/.test(v('gvAsOf')) ? v('gvAsOf') : todayStr();
+  if(!data.ghin) data.ghin = {history:[]};
+  const g = data.ghin;
+  if(index != null && !isNaN(index)) g.index = index;
+  if(v('gvNumber')) g.number = v('gvNumber');
+  if(v('gvClub')) g.club = v('gvClub');
+  if(v('gvLow') && !isNaN(parseFloat(v('gvLow')))) g.lowIndex = parseFloat(v('gvLow'));
+  if(v('gvPosted')) g.scoresPosted = +v('gvPosted') || g.scoresPosted;
+  g.asOf = asOf;
+  g.history = g.history || [];
+  const seen = new Set(g.history.map(h=>`${h.date}|${h.score}|${h.flag}`));
+  let added = 0;
+  const incoming = [];
+  for(let i = 0; i < count; i++){
+    if(!document.getElementById(`gs${i}on`).checked) continue;
+    const score = +document.getElementById(`gs${i}score`).value;
+    if(!score) continue;
+    const h = {date: document.getElementById(`gs${i}date`).value.trim(), score,
+               flag: document.getElementById(`gs${i}flag`).value,
+               used: document.getElementById(`gs${i}used`).checked};
+    incoming.push(h);
+    const key = `${h.date}|${h.score}|${h.flag}`;
+    if(!seen.has(key)){ seen.add(key); added++; }
+  }
+  // The card is the authority on recent history: incoming first, then older entries it doesn't cover
+  const incomingKeys = new Set(incoming.map(h=>`${h.date}|${h.score}|${h.flag}`));
+  g.history = incoming.concat(g.history.filter(h=>!incomingKeys.has(`${h.date}|${h.score}|${h.flag}`)));
+  data.indexLog = data.indexLog || [];
+  if(index != null && !isNaN(index) && !data.indexLog.some(e=>e.date===asOf && e.idx===index)){
+    data.indexLog.push({date:asOf, idx:index, source:'ghin'});
+  }
+  document.getElementById('ghinReview').innerHTML = '';
+  persist(); render();
+  toast(`GHIN card imported — official index ${index != null ? index.toFixed(1) : currentIndex().toFixed(1)}${added ? ` · ${added} new score${added===1?'':'s'}` : ''}`);
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// Drag & drop + paste a screenshot anywhere on the page
+const dz = document.getElementById('dropzone');
+['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev, e=>{e.preventDefault(); dz.classList.add('drag');}));
+['dragleave','drop'].forEach(ev=>dz.addEventListener(ev, e=>{e.preventDefault(); dz.classList.remove('drag');}));
+dz.addEventListener('drop', e=>handleGhinFile(e.dataTransfer.files[0]));
+document.addEventListener('paste', e=>{
+  const item = [...(e.clipboardData?.items || [])].find(i=>i.type.startsWith('image/'));
+  if(item) handleGhinFile(item.getAsFile());
+});
+
 // ---------- LOAD / SAVE (KV API with localStorage fallback, same as builds) ----------
 function setSync(msg){ document.getElementById('syncDot').textContent = msg; }
 function persist(){
@@ -661,6 +949,13 @@ async function load(){
   }
   if(loaded && loaded.player) data = loaded;
   else persist(); // first visit: seed the profile to KV + localStorage
+  // migrate profiles saved before GHIN import existed
+  if(!data.ghin){
+    data.ghin = JSON.parse(JSON.stringify(SEED_GHIN));
+    data.indexLog = data.indexLog || [{date:SEED_GHIN.asOf, idx:SEED_GHIN.index, source:'ghin'}];
+    persist();
+  }
+  if(!data.indexLog) data.indexLog = [];
   document.getElementById('rDate').value = todayStr();
   document.getElementById('pDate').value = todayStr();
   render();
