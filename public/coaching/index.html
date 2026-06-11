@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>SwingTECH · Coaching — Road to Scratch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #060806;
+      --surface: rgba(255,255,255,0.04);
+      --surface-alt: rgba(255,255,255,0.06);
+      --border: rgba(255,255,255,0.08);
+      --border-hover: rgba(46,139,58,0.4);
+      --text: #ffffff;
+      --muted: rgba(255,255,255,0.5);
+      --accent: #2e8b3a;
+      --accent-light: #3dbf4f;
+      --accent-soft: rgba(46,139,58,0.1);
+      --gold: #f0b15c;
+      --gold-soft: rgba(240,177,92,0.1);
+      --shadow: 0 2px 8px rgba(0,0,0,0.3), 0 8px 32px rgba(0,0,0,0.2);
+      --shadow-lg: 0 4px 16px rgba(0,0,0,0.4), 0 20px 60px rgba(0,0,0,0.3);
+      --radius: 16px;
+      --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,sans-serif;min-height:100vh;overflow-x:hidden}
+    body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.03;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+    @keyframes breathe{0%,100%{opacity:.10;transform:scale(1)}50%{opacity:.18;transform:scale(1.08)}}
+    @keyframes breathe2{0%,100%{opacity:.06;transform:scale(1)}50%{opacity:.11;transform:scale(1.1)}}
+    .glow-orb{position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(120px)}
+    .glow-1{width:600px;height:600px;background:var(--accent);top:-200px;left:-100px;animation:breathe 6s ease-in-out infinite}
+    .glow-2{width:500px;height:500px;background:var(--accent-light);bottom:-150px;right:-100px;opacity:.07;animation:breathe2 8s ease-in-out infinite 2s}
+
+    .topbar{background:rgba(6,8,6,0.8);border-bottom:1px solid var(--border);padding:16px 40px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+    .topbar-brand{display:flex;align-items:center;gap:14px}
+    .topbar-title{font-family:'Space Grotesk',sans-serif;font-size:1.1rem;font-weight:600;letter-spacing:0.04em}
+    .topbar-sub{font-size:0.75rem;color:var(--accent-light);letter-spacing:0.1em;text-transform:uppercase;margin-top:2px}
+    .btn-ghost{background:transparent;border:1px solid rgba(46,139,58,0.35);color:var(--accent-light);border-radius:999px;padding:10px 22px;font-family:'Space Grotesk',sans-serif;font-size:0.78rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:all 0.25s var(--ease);display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+    .btn-ghost:hover{background:var(--accent-soft);border-color:var(--accent-light)}
+    main{max-width:1100px;margin:0 auto;padding:40px 32px 80px;position:relative;z-index:1}
+
+    .card{background:var(--surface);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)}
+    .card h2{font-family:'Space Grotesk',sans-serif;font-size:0.78rem;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--accent-light);margin-bottom:16px}
+
+    /* HERO */
+    .hero{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-end;justify-content:space-between;margin-bottom:18px}
+    .hero-name{font-family:'Space Grotesk',sans-serif;font-size:2rem;font-weight:700;margin-bottom:4px}
+    .hero-sub{color:var(--muted);font-size:0.95rem}
+    .hcp-block{display:flex;gap:36px;align-items:flex-end}
+    .hcp-label{font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:4px}
+    .hcp-now{font-family:'Space Grotesk',sans-serif;font-size:3.4rem;font-weight:700;line-height:1;color:var(--accent-light)}
+    .hcp-goal{font-family:'Space Grotesk',sans-serif;font-size:2rem;font-weight:700;line-height:1.2;color:var(--gold)}
+    .progress-wrap{margin:18px 0 8px}
+    .progress-track{height:10px;border-radius:999px;background:rgba(255,255,255,0.07);overflow:hidden}
+    .progress-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--accent-light));transition:width 0.6s var(--ease)}
+    .progress-meta{display:flex;justify-content:space-between;font-size:0.75rem;color:var(--muted);margin-top:6px}
+    .milestones{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+    .ms{border:1px solid var(--border);border-radius:999px;padding:5px 14px;font-size:0.78rem;font-weight:600;color:var(--muted);font-family:'Space Grotesk',sans-serif}
+    .ms.hit{background:var(--accent-soft);border-color:rgba(46,139,58,0.4);color:var(--accent-light)}
+    .ms.next{border-color:rgba(240,177,92,0.45);color:var(--gold);background:var(--gold-soft)}
+
+    /* NEXT STEP */
+    .next-card{border:1px solid rgba(240,177,92,0.4);background:linear-gradient(135deg,rgba(240,177,92,0.08),rgba(46,139,58,0.06));margin-bottom:18px}
+    .next-card h2{color:var(--gold)}
+    .next-title{font-family:'Space Grotesk',sans-serif;font-size:1.35rem;font-weight:700;margin-bottom:8px}
+    .next-detail{color:rgba(255,255,255,0.75);font-size:0.95rem;line-height:1.6;max-width:760px}
+    .next-actions{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap}
+    .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent-light));color:#fff;border:none;border-radius:999px;padding:10px 24px;font-family:'Space Grotesk',sans-serif;font-size:0.82rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;transition:all 0.25s var(--ease);text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+    .btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(46,139,58,0.35)}
+    .next-why{margin-top:14px;font-size:0.78rem;color:var(--muted)}
+
+    .grid-2{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;margin-bottom:18px}
+    .grid-2-even{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+    @media(max-width:820px){.grid-2,.grid-2-even{grid-template-columns:1fr}}
+
+    /* CHART */
+    .chart-svg{width:100%;height:220px;display:block}
+    .chart-empty{color:var(--muted);font-size:0.88rem;padding:40px 0;text-align:center}
+
+    /* WEEK */
+    .week-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+    .week-row:last-child{border-bottom:none}
+    .week-row .lbl{font-size:0.88rem;color:rgba(255,255,255,0.8)}
+    .week-row .val{font-family:'Space Grotesk',sans-serif;font-weight:700}
+    .ok{color:var(--accent-light)} .warn{color:var(--gold)}
+    .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+    @media(max-width:600px){.stat-grid{grid-template-columns:repeat(2,1fr)}}
+    .stat{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
+    .stat .n{font-family:'Space Grotesk',sans-serif;font-size:1.25rem;font-weight:700}
+    .stat .t{font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+    .stat .tgt{font-size:0.68rem;color:var(--muted);margin-top:2px}
+    .stat.below .n{color:var(--gold)} .stat.meets .n{color:var(--accent-light)}
+
+    /* FORMS */
+    label{display:block;font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:6px}
+    input,select,textarea{width:100%;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Inter',sans-serif;font-size:0.9rem;outline:none;transition:border-color 0.2s}
+    input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+    select option{background:#0c120c;color:#fff}
+    .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .form-grid .full{grid-column:1/-1}
+    .form-foot{margin-top:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .form-note{font-size:0.75rem;color:var(--muted)}
+
+    /* ROUNDS TABLE */
+    .rounds-table{width:100%;border-collapse:collapse;font-size:0.82rem}
+    .rounds-table th{text-align:left;text-transform:uppercase;letter-spacing:0.1em;font-size:0.62rem;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--border)}
+    .rounds-table td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,0.04)}
+    .btn-x{background:transparent;border:1px solid rgba(255,80,80,0.25);border-radius:50%;width:22px;height:22px;color:rgba(255,80,80,0.6);font-size:0.7rem;font-weight:700;cursor:pointer;line-height:1}
+    .btn-x:hover{background:rgba(255,80,80,0.15);color:#ff5050}
+
+    /* PLAN */
+    .phase{border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:12px;background:rgba(255,255,255,0.02)}
+    .phase.current{border-color:rgba(46,139,58,0.5);background:var(--accent-soft)}
+    .phase.done{opacity:0.55}
+    .phase-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+    .phase-name{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem}
+    .phase-band{font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+    .phase-tag{font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;border-radius:999px;padding:4px 12px}
+    .phase.current .phase-tag{background:rgba(46,139,58,0.25);color:var(--accent-light)}
+    .phase.done .phase-tag{background:rgba(255,255,255,0.08);color:var(--muted)}
+    .phase-focus{margin-top:8px;font-size:0.88rem;color:rgba(255,255,255,0.75);line-height:1.55}
+    .drills{margin-top:12px;display:grid;gap:8px}
+    .drill{display:flex;gap:10px;align-items:baseline;font-size:0.85rem;color:rgba(255,255,255,0.78)}
+    .drill b{color:var(--text);font-weight:600;white-space:nowrap}
+    .drill .mins{margin-left:auto;color:var(--muted);font-size:0.75rem;white-space:nowrap}
+
+    .sessions-list{display:grid;gap:8px}
+    .session-row{display:flex;gap:12px;align-items:center;font-size:0.85rem;color:rgba(255,255,255,0.78);background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:9px 12px}
+    .session-row .d{color:var(--muted);font-size:0.75rem;min-width:78px}
+    .session-row .f{font-weight:600;color:var(--accent-light);min-width:90px;text-transform:capitalize}
+    .session-row .m{margin-left:auto;color:var(--muted);font-size:0.78rem;white-space:nowrap}
+    .sync-dot{font-size:0.72rem;color:var(--muted)}
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(20,30,20,0.95);border:1px solid rgba(46,139,58,0.5);color:#fff;border-radius:999px;padding:10px 24px;font-size:0.85rem;z-index:500;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:opacity 0.3s}
+    .toast.show{opacity:1}
+    @media(max-width:600px){.topbar{padding:14px 20px}main{padding:24px 16px 60px}.hcp-block{gap:22px}.form-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div class="glow-orb glow-1"></div>
+<div class="glow-orb glow-2"></div>
+
+<header class="topbar">
+  <div class="topbar-brand">
+    <div>
+      <div class="topbar-title">SwingTECH Golf Lab</div>
+      <div class="topbar-sub">Coaching · Road to Scratch</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center">
+    <span class="sync-dot" id="syncDot"></span>
+    <a class="btn-ghost" href="/build-sheet/index.html">Build Sheets</a>
+  </div>
+</header>
+
+<main>
+  <!-- PROFILE / HERO -->
+  <section class="card" style="margin-bottom:18px">
+    <div class="hero">
+      <div>
+        <div class="hero-name" id="playerName">—</div>
+        <div class="hero-sub" id="playerSub">—</div>
+      </div>
+      <div class="hcp-block">
+        <div>
+          <div class="hcp-label">Current Handicap</div>
+          <div class="hcp-now" id="hcpNow">—</div>
+        </div>
+        <div>
+          <div class="hcp-label">Goal</div>
+          <div class="hcp-goal" id="hcpGoal">—</div>
+        </div>
+      </div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <div class="progress-meta"><span id="progressLeft">Start · 2.5</span><span id="progressPct"></span><span>Scratch · 0.0</span></div>
+    </div>
+    <div class="milestones" id="milestones"></div>
+  </section>
+
+  <!-- DO THIS NEXT -->
+  <section class="card next-card" id="nextCard">
+    <h2>Do This Next</h2>
+    <div class="next-title" id="nextTitle">—</div>
+    <div class="next-detail" id="nextDetail"></div>
+    <div class="next-actions" id="nextActions"></div>
+    <div class="next-why" id="nextWhy"></div>
+  </section>
+
+  <!-- TREND + THIS WEEK -->
+  <div class="grid-2">
+    <section class="card">
+      <h2>Handicap Trend</h2>
+      <div id="chartWrap"></div>
+    </section>
+    <section class="card">
+      <h2>This Week</h2>
+      <div id="weekRows"></div>
+      <div class="stat-grid" id="statGrid"></div>
+    </section>
+  </div>
+
+  <!-- LOG FORMS -->
+  <div class="grid-2-even">
+    <section class="card" id="logRound">
+      <h2>Log a Round</h2>
+      <form onsubmit="addRound(event)">
+        <div class="form-grid">
+          <div><label>Date</label><input type="date" id="rDate" required/></div>
+          <div><label>Course</label><input type="text" id="rCourse" placeholder="Crescent Pointe GC"/></div>
+          <div><label>Score (adjusted gross)</label><input type="number" id="rScore" min="55" max="120" required/></div>
+          <div><label>Course Rating</label><input type="number" id="rRating" step="0.1" min="60" max="80" required/></div>
+          <div><label>Slope</label><input type="number" id="rSlope" min="55" max="155" value="113" required/></div>
+          <div><label>Putts</label><input type="number" id="rPutts" min="18" max="50"/></div>
+          <div><label>Fairways Hit (of 14)</label><input type="number" id="rFw" min="0" max="14"/></div>
+          <div><label>Greens in Regulation (of 18)</label><input type="number" id="rGir" min="0" max="18"/></div>
+          <div class="full"><label>Up &amp; Downs — converted / attempts</label>
+            <div style="display:flex;gap:10px"><input type="number" id="rUdMade" min="0" max="18" placeholder="Made"/><input type="number" id="rUdTry" min="0" max="18" placeholder="Attempts"/></div>
+          </div>
+        </div>
+        <div class="form-foot">
+          <button class="btn-primary" type="submit">Save Round</button>
+          <span class="form-note">Differential = (113 ÷ slope) × (score − rating). Index uses your best 8 of the last 20.</span>
+        </div>
+      </form>
+    </section>
+    <section class="card" id="logPractice">
+      <h2>Log Practice</h2>
+      <form onsubmit="addSession(event)">
+        <div class="form-grid">
+          <div><label>Date</label><input type="date" id="pDate" required/></div>
+          <div><label>Focus</label>
+            <select id="pFocus">
+              <option value="putting">Putting</option>
+              <option value="wedges">Wedges / Short Game</option>
+              <option value="approach">Approach / Irons</option>
+              <option value="driving">Driving</option>
+              <option value="scoring">Scoring / On-Course</option>
+            </select>
+          </div>
+          <div><label>Minutes</label><input type="number" id="pMins" min="5" max="300" value="45" required/></div>
+          <div><label>Drill</label><input type="text" id="pDrill" placeholder="3-6-9 Circle Drill"/></div>
+          <div class="full"><label>Notes</label><textarea id="pNotes" rows="2" placeholder="Made 68/75 inside 9 ft…"></textarea></div>
+        </div>
+        <div class="form-foot"><button class="btn-primary" type="submit">Save Practice</button></div>
+      </form>
+      <div style="margin-top:18px">
+        <h2 style="margin-bottom:10px">Recent Practice</h2>
+        <div class="sessions-list" id="sessionsList"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ROUNDS -->
+  <section class="card" style="margin-bottom:18px">
+    <h2>Rounds</h2>
+    <div style="overflow-x:auto">
+      <table class="rounds-table">
+        <thead><tr><th>Date</th><th>Course</th><th>Score</th><th>Diff</th><th>Putts</th><th>FW</th><th>GIR</th><th>U&amp;D</th><th></th></tr></thead>
+        <tbody id="roundsBody"></tbody>
+      </table>
+    </div>
+    <div class="chart-empty" id="roundsEmpty" style="display:none">No rounds logged yet — your baseline index is 2.5 until your first scores come in.</div>
+  </section>
+
+  <!-- PLAN -->
+  <section class="card">
+    <h2>The Plan — 2.5 to Scratch</h2>
+    <p style="color:var(--muted);font-size:0.88rem;margin-bottom:16px;line-height:1.6">
+      Five phases, each tied to a milestone. The cadence every week: <b style="color:var(--text)">4 practice blocks + 2 logged rounds</b>.
+      Your round stats can override the phase focus — if a number falls below target, that becomes the week's priority.
+    </p>
+    <div id="phases"></div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PROFILE_ID = 'michael-montanez';
+const LS_KEY = 'stg_coaching';
+
+const DEFAULT_PROFILE = {
+  player: {
+    name: 'Michael Montanez',
+    email: 'michael.l.montanez@gmail.com',
+    startingIndex: 2.5,
+    goalIndex: 0.0,
+    startDate: '2026-06-11',
+    homeBase: 'Bluffton Studio'
+  },
+  settings: { weeklyRounds: 2, weeklyPractice: 4 },
+  rounds: [],    // {date, course, score, rating, slope, diff, putts, fw, gir, udMade, udTry}
+  sessions: []   // {date, focus, mins, drill, notes}
+};
+
+const MILESTONES = [2.5, 2.0, 1.5, 1.0, 0.5, 0.0];
+
+const PHASES = [
+  { band:[2.5,2.0], name:'Phase 1 · Putting Foundation', focus:'putting',
+    why:'At 2.5, the cheapest strokes are on the greens. Target: 31 putts or fewer per round and zero 3-putts inside 30 ft.',
+    drills:[
+      {n:'3-6-9 Circle Drill', d:'25 putts each from 3, 6 and 9 ft around the hole. Goal: 70/75 makes.', m:30},
+      {n:'Lag Ladder', d:'10 putts each from 30, 40 and 50 ft — 8 of 10 must finish inside 3 ft.', m:20},
+      {n:'Gate Drill', d:'Two tees a ball-width apart, 6 ft out. 20 putts through the gate without touching.', m:15}
+    ]},
+  { band:[2.0,1.5], name:'Phase 2 · Wedges & Scrambling', focus:'wedges',
+    why:'Scratch players get up and down 50%+ of the time. Own three landing numbers per wedge from 40–100 yds.',
+    drills:[
+      {n:'Wedge Ladder', d:'Hit 50 / 75 / 100-yd shots in rotation. 6 of 9 inside 15 ft.', m:30},
+      {n:'Clock-Face Carries', d:'9:00 and 10:30 swings with each wedge — chart your carry numbers.', m:25},
+      {n:'Par-18 Short Game', d:'9 random chips/pitches, hole out everything. Score it like par-2s; beat 20.', m:30}
+    ]},
+  { band:[1.5,1.0], name:'Phase 3 · Approach Play', focus:'approach',
+    why:'GIR is the strongest predictor of scoring. Target: 58%+ greens (10–11 per round) and tighter proximity from 125–175.',
+    drills:[
+      {n:'Start-Line Stick', d:'Alignment stick 10 yds out — 15 of 20 shots start on the correct side.', m:25},
+      {n:'9-Window Flighting', d:'Low/mid/high × draw/straight/fade with a 7-iron. One full cycle.', m:30},
+      {n:'Proximity Game', d:'10 shots from 150 — average inside 35 ft wins the session.', m:25}
+    ]},
+  { band:[1.0,0.5], name:'Phase 4 · Driving & Strategy', focus:'driving',
+    why:'From 1.0 down, penalty drives are the killer. Target: 60%+ fairways and zero tee-shot penalties per round.',
+    drills:[
+      {n:'Fairway Window', d:'20 drivers at a 35-yd-wide target window — 14+ inside it.', m:25},
+      {n:'Stock Shot Reps', d:'Same shape, same target, 15 in a row. Any double-cross resets the count.', m:25},
+      {n:'Tee Strategy Map', d:'Map every tee shot at your home course: club, line, miss side.', m:20}
+    ]},
+  { band:[0.5,0.0], name:'Phase 5 · Scoring Conversion', focus:'scoring',
+    why:'The last half-stroke is converting: birdie the par 5s, cap doubles at one per two rounds, and play under pressure.',
+    drills:[
+      {n:'Par-5 Plan', d:'Play all par 5s as three-shot holes for a month — track birdie rate (target 35%+).', m:0},
+      {n:'Doubles Audit', d:'After each round, write down what caused every double-or-worse. Kill the pattern.', m:15},
+      {n:'Money Game 9', d:'9 holes vs. a scratch card (par every hole). Match-play pressure reps weekly.', m:0}
+    ]}
+];
+
+const FOCUS_LABELS = {putting:'Putting', wedges:'Wedges / Short Game', approach:'Approach / Irons', driving:'Driving', scoring:'Scoring / On-Course'};
+
+let data = JSON.parse(JSON.stringify(DEFAULT_PROFILE));
+
+// ---------- handicap math ----------
+function differential(score, rating, slope){
+  return Math.round((113 / slope) * (score - rating) * 10) / 10;
+}
+// WHS: how many of the lowest differentials count, plus adjustment
+const WHS_TABLE = {3:[1,-2],4:[1,-1],5:[1,0],6:[2,-1],7:[2,0],8:[2,0],9:[3,0],10:[3,0],11:[3,0],12:[4,0],13:[4,0],14:[4,0],15:[5,0],16:[5,0],17:[6,0],18:[6,0],19:[7,0],20:[8,0]};
+function indexFromDiffs(diffs){
+  const last20 = diffs.slice(-20);
+  if(last20.length < 3) return null;
+  const [cnt, adj] = WHS_TABLE[last20.length];
+  const best = [...last20].sort((a,b)=>a-b).slice(0, cnt);
+  const avg = best.reduce((s,v)=>s+v,0) / cnt;
+  return Math.round((avg + adj) * 10) / 10;
+}
+function sortedRounds(){ return [...data.rounds].sort((a,b)=>a.date.localeCompare(b.date)); }
+function currentIndex(){
+  const idx = indexFromDiffs(sortedRounds().map(r=>r.diff));
+  return idx === null ? data.player.startingIndex : idx;
+}
+
+// ---------- week + stats ----------
+function weekStart(d){ // Monday
+  const dt = new Date(d + 'T12:00:00');
+  const day = (dt.getDay() + 6) % 7;
+  dt.setDate(dt.getDate() - day);
+  return dt.toISOString().slice(0,10);
+}
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function thisWeek(items){ const ws = weekStart(todayStr()); return items.filter(i=>weekStart(i.date) === ws); }
+
+const STAT_TARGETS = {putts:{label:'Putts', target:31, dir:'lte', focus:'putting'},
+                      fwPct:{label:'Fairways', target:60, dir:'gte', focus:'driving', pct:true},
+                      girPct:{label:'GIR', target:58, dir:'gte', focus:'approach', pct:true},
+                      udPct:{label:'Up & Down', target:50, dir:'gte', focus:'wedges', pct:true}};
+function recentStats(){
+  const last5 = sortedRounds().slice(-5);
+  const avg = (vals)=> vals.length ? vals.reduce((s,v)=>s+v,0)/vals.length : null;
+  const putts = avg(last5.filter(r=>r.putts!=null).map(r=>r.putts));
+  const fwPct = avg(last5.filter(r=>r.fw!=null).map(r=>r.fw/14*100));
+  const girPct = avg(last5.filter(r=>r.gir!=null).map(r=>r.gir/18*100));
+  const ud = last5.filter(r=>r.udTry>0);
+  const udPct = ud.length ? ud.reduce((s,r)=>s+r.udMade,0)/ud.reduce((s,r)=>s+r.udTry,0)*100 : null;
+  return {putts, fwPct, girPct, udPct};
+}
+function statMeets(key, val){
+  const t = STAT_TARGETS[key];
+  return t.dir === 'lte' ? val <= t.target : val >= t.target;
+}
+// Worst stat below target → overrides phase focus
+function statOverride(){
+  const stats = recentStats();
+  let worst = null;
+  for(const key of Object.keys(STAT_TARGETS)){
+    const v = stats[key];
+    if(v == null || statMeets(key, v)) continue;
+    const t = STAT_TARGETS[key];
+    const gap = t.dir === 'lte' ? (v - t.target)/t.target : (t.target - v)/t.target;
+    if(!worst || gap > worst.gap) worst = {key, val:v, gap, focus:t.focus, t};
+  }
+  return worst;
+}
+function currentPhase(){
+  const idx = currentIndex();
+  for(const p of PHASES){ if(idx > p.band[1]) return p; }
+  return PHASES[PHASES.length-1];
+}
+function weeklyFocus(){
+  const ov = statOverride();
+  if(ov){
+    const t = ov.t;
+    const val = t.pct ? ov.val.toFixed(0)+'%' : ov.val.toFixed(1);
+    const tgt = t.pct ? t.target+'%' : t.target;
+    return {focus: ov.focus, reason:`Stat-driven: your ${t.label.toLowerCase()} is averaging ${val} vs. the ${tgt} target over your last 5 rounds.`};
+  }
+  const p = currentPhase();
+  return {focus: p.focus, reason:`Phase focus: ${p.name}.`};
+}
+function drillsFor(focus){
+  const p = PHASES.find(p=>p.focus===focus) || currentPhase();
+  return p.drills;
+}
+
+// ---------- NEXT STEP engine ----------
+function nextStep(){
+  const idx = currentIndex();
+  const rounds = sortedRounds();
+  if(idx <= data.player.goalIndex && rounds.length >= 3){
+    return {title:'You did it — scratch golfer. 🏆',
+      detail:'Your index is at or below 0.0. Keep the weekly cadence to hold it, and consider setting a plus-handicap goal.',
+      actions:[], why:'Index ' + idx.toFixed(1) + ' ≤ goal 0.0.'};
+  }
+  if(rounds.length === 0){
+    return {title:'Log your most recent round to set your baseline.',
+      detail:'Your index starts at 2.5. Enter your last round below — score, course rating, slope, plus putts, fairways, greens and up-and-downs. Those stats tell the plan exactly where your strokes are leaking, and after 3 rounds your index starts computing for real.',
+      actions:[{label:'Log a Round', href:'#logRound'}],
+      why:'No rounds on file yet — everything starts from the baseline.'};
+  }
+  const wf = weeklyFocus();
+  const wkSessions = thisWeek(data.sessions);
+  const wkRounds = thisWeek(data.rounds);
+  if(wkSessions.length < data.settings.weeklyPractice){
+    const drill = drillsFor(wf.focus)[wkSessions.length % drillsFor(wf.focus).length];
+    return {title:`Practice block ${wkSessions.length+1} of ${data.settings.weeklyPractice}: ${drill.n}`,
+      detail:`${drill.d}${drill.m ? ` Budget ~${drill.m} minutes.` : ''} Focus area this week: ${FOCUS_LABELS[wf.focus]}. Log it below when you're done.`,
+      actions:[{label:'Log Practice', href:'#logPractice'}],
+      why: wf.reason};
+  }
+  if(wkRounds.length < data.settings.weeklyRounds){
+    return {title:`Play round ${wkRounds.length+1} of ${data.settings.weeklyRounds} this week — and log every stat.`,
+      detail:'Practice blocks are done for the week. Now take it to the course: track putts, fairways, GIR and up-and-down attempts while you play. The differentials drive your index down; the stats steer next week\'s plan.',
+      actions:[{label:'Log a Round', href:'#logRound'}],
+      why:`${wkSessions.length}/${data.settings.weeklyPractice} practice blocks done, ${wkRounds.length}/${data.settings.weeklyRounds} rounds logged this week.`};
+  }
+  const ms = MILESTONES.find(m=>m < idx);
+  return {title:'Week complete — you\'re ahead of the plan. ✅',
+    detail:`All ${data.settings.weeklyPractice} practice blocks and ${data.settings.weeklyRounds} rounds are in. Next milestone: ${ms != null ? ms.toFixed(1) : '0.0'}. Rest, or bank an extra short-game session — it never hurts.`,
+    actions:[], why:'Weekly practice and round targets both met.'};
+}
+
+// ---------- RENDER ----------
+function esc(s){ return String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtDate(d){ const dt = new Date(d+'T12:00:00'); return dt.toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
+
+function render(){
+  const idx = currentIndex();
+  const start = data.player.startingIndex, goal = data.player.goalIndex;
+
+  document.getElementById('playerName').textContent = data.player.name;
+  document.getElementById('playerSub').textContent =
+    `${data.player.homeBase} · started ${fmtDate(data.player.startDate)} · ${data.rounds.length} round${data.rounds.length===1?'':'s'} logged`;
+  document.getElementById('hcpNow').textContent = idx.toFixed(1);
+  document.getElementById('hcpGoal').textContent = goal.toFixed(1);
+
+  const pct = Math.max(0, Math.min(100, (start - idx) / (start - goal) * 100));
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLeft').textContent = 'Start · ' + start.toFixed(1);
+  document.getElementById('progressPct').textContent = pct.toFixed(0) + '% of the way to scratch';
+
+  document.getElementById('milestones').innerHTML = MILESTONES.map(m=>{
+    const hit = idx <= m;
+    const next = !hit && MILESTONES.find(x=>x<idx) === m;
+    return `<span class="ms ${hit?'hit':next?'next':''}">${m.toFixed(1)}${hit?' ✓':''}</span>`;
+  }).join('');
+
+  // next step
+  const ns = nextStep();
+  document.getElementById('nextTitle').textContent = ns.title;
+  document.getElementById('nextDetail').textContent = ns.detail;
+  document.getElementById('nextActions').innerHTML = ns.actions.map(a=>`<a class="btn-primary" href="${a.href}">${a.label}</a>`).join('');
+  document.getElementById('nextWhy').textContent = ns.why ? 'Why: ' + ns.why : '';
+
+  renderChart();
+  renderWeek();
+  renderRounds();
+  renderSessions();
+  renderPhases();
+}
+
+function renderChart(){
+  const rounds = sortedRounds();
+  const pts = [{date:data.player.startDate, idx:data.player.startingIndex}];
+  const diffs = [];
+  for(const r of rounds){
+    diffs.push(r.diff);
+    const ix = indexFromDiffs(diffs);
+    pts.push({date:r.date, idx: ix===null ? data.player.startingIndex : ix});
+  }
+  const wrap = document.getElementById('chartWrap');
+  if(rounds.length === 0){
+    wrap.innerHTML = '<div class="chart-empty">Your trend line starts at 2.5 and updates with every round you log.<br/>After 3 rounds the index computes from your differentials (best 8 of last 20).</div>';
+    return;
+  }
+  const W=560, H=220, padL=34, padR=14, padT=14, padB=24;
+  const ys = pts.map(p=>p.idx);
+  const yMax = Math.max(3, Math.max(...ys) + 0.5);
+  const yMin = Math.min(-0.5, Math.min(...ys) - 0.3);
+  const x = i => padL + (W-padL-padR) * (pts.length===1 ? 0 : i/(pts.length-1));
+  const y = v => padT + (H-padT-padB) * (1 - (v - yMin)/(yMax - yMin));
+  const line = pts.map((p,i)=>`${i?'L':'M'}${x(i).toFixed(1)},${y(p.idx).toFixed(1)}`).join(' ');
+  const gridVals = []; for(let v=Math.ceil(yMin); v<=Math.floor(yMax); v++) gridVals.push(v);
+  wrap.innerHTML = `<svg class="chart-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    ${gridVals.map(v=>`<line x1="${padL}" x2="${W-padR}" y1="${y(v)}" y2="${y(v)}" stroke="rgba(255,255,255,0.06)"/>
+      <text x="${padL-6}" y="${y(v)+3}" fill="rgba(255,255,255,0.4)" font-size="9" text-anchor="end">${v}</text>`).join('')}
+    <line x1="${padL}" x2="${W-padR}" y1="${y(0)}" y2="${y(0)}" stroke="rgba(240,177,92,0.55)" stroke-dasharray="5 4"/>
+    <text x="${W-padR}" y="${y(0)-5}" fill="rgba(240,177,92,0.8)" font-size="9" text-anchor="end">GOAL · SCRATCH</text>
+    <path d="${line}" fill="none" stroke="#3dbf4f" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    ${pts.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p.idx)}" r="3.4" fill="#0a0f0a" stroke="#3dbf4f" stroke-width="2"><title>${p.date} · ${p.idx.toFixed(1)}</title></circle>`).join('')}
+  </svg>`;
+}
+
+function renderWeek(){
+  const wkS = thisWeek(data.sessions), wkR = thisWeek(data.rounds);
+  const wf = weeklyFocus();
+  const mins = wkS.reduce((s,x)=>s+(x.mins||0),0);
+  document.getElementById('weekRows').innerHTML = `
+    <div class="week-row"><span class="lbl">Practice blocks</span><span class="val ${wkS.length>=data.settings.weeklyPractice?'ok':'warn'}">${wkS.length} / ${data.settings.weeklyPractice}</span></div>
+    <div class="week-row"><span class="lbl">Practice minutes</span><span class="val">${mins}</span></div>
+    <div class="week-row"><span class="lbl">Rounds logged</span><span class="val ${wkR.length>=data.settings.weeklyRounds?'ok':'warn'}">${wkR.length} / ${data.settings.weeklyRounds}</span></div>
+    <div class="week-row"><span class="lbl">Focus area</span><span class="val ok">${FOCUS_LABELS[wf.focus]}</span></div>`;
+  const stats = recentStats();
+  const cells = Object.entries(STAT_TARGETS).map(([key,t])=>{
+    const v = stats[key];
+    const has = v != null;
+    const cls = !has ? '' : statMeets(key,v) ? 'meets' : 'below';
+    const val = !has ? '—' : t.pct ? v.toFixed(0)+'%' : v.toFixed(1);
+    const tgt = (t.dir==='lte'?'≤ ':'≥ ') + t.target + (t.pct?'%':'');
+    return `<div class="stat ${cls}"><div class="n">${val}</div><div class="t">${t.label}</div><div class="tgt">target ${tgt}</div></div>`;
+  }).join('');
+  document.getElementById('statGrid').innerHTML = cells;
+}
+
+function renderRounds(){
+  const rounds = sortedRounds().slice().reverse();
+  document.getElementById('roundsEmpty').style.display = rounds.length ? 'none' : 'block';
+  document.getElementById('roundsBody').innerHTML = rounds.map(r=>`<tr>
+    <td>${fmtDate(r.date)}</td><td>${esc(r.course)||'—'}</td><td><b>${r.score}</b></td>
+    <td style="color:var(--accent-light)">${r.diff.toFixed(1)}</td>
+    <td>${r.putts??'—'}</td><td>${r.fw!=null?r.fw+'/14':'—'}</td><td>${r.gir!=null?r.gir+'/18':'—'}</td>
+    <td>${r.udTry?`${r.udMade}/${r.udTry}`:'—'}</td>
+    <td><button class="btn-x" title="Delete round" onclick="deleteRound('${r.id}')">×</button></td>
+  </tr>`).join('');
+}
+
+function renderSessions(){
+  const recent = [...data.sessions].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
+  document.getElementById('sessionsList').innerHTML = recent.length ? recent.map(s=>`
+    <div class="session-row"><span class="d">${fmtDate(s.date)}</span><span class="f">${FOCUS_LABELS[s.focus]||esc(s.focus)}</span>
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.drill||s.notes||'')}</span><span class="m">${s.mins} min</span></div>`).join('')
+    : '<div class="form-note">No practice logged yet.</div>';
+}
+
+function renderPhases(){
+  const idx = currentIndex();
+  const cur = currentPhase();
+  document.getElementById('phases').innerHTML = PHASES.map(p=>{
+    const done = idx <= p.band[1];
+    const isCur = p === cur && !done;
+    const tag = done ? 'Complete ✓' : isCur ? 'Current Phase' : '';
+    return `<div class="phase ${done?'done':isCur?'current':''}">
+      <div class="phase-head">
+        <div><div class="phase-name">${p.name}</div><div class="phase-band">Handicap ${p.band[0].toFixed(1)} → ${p.band[1].toFixed(1)}</div></div>
+        ${tag?`<span class="phase-tag">${tag}</span>`:''}
+      </div>
+      <div class="phase-focus">${p.why}</div>
+      <div class="drills">${p.drills.map(d=>`<div class="drill"><b>${d.n}</b><span>${d.d}</span>${d.m?`<span class="mins">~${d.m} min</span>`:''}</div>`).join('')}</div>
+    </div>`;
+  }).join('');
+}
+
+// ---------- ACTIONS ----------
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2600);
+}
+function addRound(e){
+  e.preventDefault();
+  const score = +document.getElementById('rScore').value;
+  const rating = +document.getElementById('rRating').value;
+  const slope = +document.getElementById('rSlope').value;
+  const num = id => { const v = document.getElementById(id).value; return v === '' ? null : +v; };
+  data.rounds.push({
+    id: 'r' + Date.now(),
+    date: document.getElementById('rDate').value,
+    course: document.getElementById('rCourse').value.trim(),
+    score, rating, slope,
+    diff: differential(score, rating, slope),
+    putts: num('rPutts'), fw: num('rFw'), gir: num('rGir'),
+    udMade: num('rUdMade') || 0, udTry: num('rUdTry') || 0
+  });
+  e.target.reset();
+  document.getElementById('rDate').value = todayStr();
+  document.getElementById('rSlope').value = 113;
+  persist(); render();
+  toast('Round saved — index updated to ' + currentIndex().toFixed(1));
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function deleteRound(id){
+  if(!confirm('Delete this round?')) return;
+  data.rounds = data.rounds.filter(r=>r.id!==id);
+  persist(); render();
+}
+function addSession(e){
+  e.preventDefault();
+  data.sessions.push({
+    id: 's' + Date.now(),
+    date: document.getElementById('pDate').value,
+    focus: document.getElementById('pFocus').value,
+    mins: +document.getElementById('pMins').value,
+    drill: document.getElementById('pDrill').value.trim(),
+    notes: document.getElementById('pNotes').value.trim()
+  });
+  e.target.reset();
+  document.getElementById('pDate').value = todayStr();
+  document.getElementById('pMins').value = 45;
+  persist(); render();
+  toast('Practice logged 💪');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ---------- LOAD / SAVE (KV API with localStorage fallback, same as builds) ----------
+function setSync(msg){ document.getElementById('syncDot').textContent = msg; }
+function persist(){
+  localStorage.setItem(LS_KEY, JSON.stringify(data));
+  fetch('/api/coaching/' + PROFILE_ID, {
+    method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data)
+  }).then(r=>setSync(r.ok ? 'Synced ✓' : 'Saved locally')).catch(()=>setSync('Saved locally'));
+}
+async function load(){
+  let loaded = null;
+  try{
+    const r = await fetch('/api/coaching/' + PROFILE_ID);
+    if(r.ok) loaded = await r.json();
+  }catch(e){}
+  if(!loaded){
+    try{ loaded = JSON.parse(localStorage.getItem(LS_KEY)); }catch(e){}
+  }
+  if(loaded && loaded.player) data = loaded;
+  else persist(); // first visit: seed the profile to KV + localStorage
+  document.getElementById('rDate').value = todayStr();
+  document.getElementById('pDate').value = todayStr();
+  render();
+}
+load();
+</script>
+</body>
+</html>

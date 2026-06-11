@@ -1,6 +1,7 @@
 {
   "rewrites": [
     { "source": "/api/builds", "destination": "/api/builds/index" },
-    { "source": "/api/builds/:id", "destination": "/api/builds/[id]" }
+    { "source": "/api/builds/:id", "destination": "/api/builds/[id]" },
+    { "source": "/api/coaching/:id", "destination": "/api/coaching/[id]" }
   ]
 }
