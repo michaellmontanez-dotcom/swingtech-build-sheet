@@ -135,16 +135,29 @@ export function UnoView({ view, me, send, pending }: GameViewProps) {
         </div>
       )}
 
-      {/* status */}
-      <div className="text-center font-extrabold">
+      {/* status + what-to-do guidance */}
+      <div className="text-center">
         {v.finished ? (
-          <span className="text-sunny">
+          <span className="text-2xl font-extrabold text-sunny">
             🏆 {v.players.find((p) => p.id === v.winnerId)?.name} wins!
           </span>
         ) : myTurn ? (
-          <span className="text-mint animate-pop inline-block">Your turn!</span>
+          <div>
+            <div className="text-xl font-extrabold text-mint animate-pop">Your turn!</div>
+            <div className="text-sm text-white/80">
+              {v.pendingDraw > 0
+                ? v.stacking
+                  ? `Stack a ${v.pendingKind === "draw4" ? "+4" : "+2"} or tap the deck to draw ${v.pendingDraw}`
+                  : `Draw ${v.pendingDraw}`
+                : v.drewThisTurn
+                  ? "Play the card you drew, or Pass"
+                  : playableSet.size > 0
+                    ? "Tap a raised card to play it"
+                    : "No matches — tap the deck to Draw"}
+            </div>
+          </div>
         ) : (
-          <span className="text-white/70">
+          <span className="font-bold text-white/70">
             Waiting for {v.players.find((p) => p.id === v.activePlayerId)?.name}…
           </span>
         )}
@@ -207,8 +220,10 @@ export function UnoView({ view, me, send, pending }: GameViewProps) {
         </div>
       )}
 
-      {/* log */}
-      <div className="px-1 text-center text-xs text-white/50">{v.log[v.log.length - 1]}</div>
+      {/* last action — visible so skips / draws / color changes are obvious */}
+      <div className="mx-auto max-w-xs rounded-full bg-black/25 px-4 py-1.5 text-center text-sm font-semibold text-white/90">
+        {v.log[v.log.length - 1]}
+      </div>
     </div>
   );
 }

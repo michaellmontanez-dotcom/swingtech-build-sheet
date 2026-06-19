@@ -404,9 +404,17 @@ function doDraw(s: UnoState, playerId: string) {
     return;
   }
   drawForPlayer(s, playerId, 1);
-  s.drewThisTurn = true;
-  s.log.push(`${name(s, playerId)} drew a card.`);
-  // If the drawn card isn't playable, the player can choose to pass.
+  const drawn = s.hands[playerId][s.hands[playerId].length - 1];
+  if (drawn && canPlayCard(s, drawn)) {
+    // Drew something playable — let them decide to play it or pass.
+    s.drewThisTurn = true;
+    s.log.push(`${name(s, playerId)} drew a card.`);
+  } else {
+    // Drew a dead card — auto-end the turn so nobody has to hunt for a Pass button.
+    s.drewThisTurn = false;
+    s.log.push(`${name(s, playerId)} drew and passed.`);
+    s.turn = advance(s.turn, 1);
+  }
 }
 
 function validateCallUno(state: UnoState, move: Move): ValidateResult {
