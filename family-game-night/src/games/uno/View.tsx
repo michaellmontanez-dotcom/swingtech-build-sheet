@@ -29,17 +29,32 @@ function label(card: UnoCard): string {
   }
 }
 
+function sublabel(card: UnoCard): string {
+  switch (card.kind) {
+    case "draw2": return "Draw 2";
+    case "wild4": return "Wild +4";
+    case "wild": return "Wild";
+    case "skip": return "Skip";
+    case "reverse": return "Reverse";
+    default: return "";
+  }
+}
+
 function CardFace({ card, color, big }: { card: UnoCard; color?: string; big?: boolean }) {
   const shown = card.color === "wild" ? "wild" : card.color;
+  const sub = sublabel(card);
   return (
     <div
-      className={`relative grid place-items-center rounded-xl ${COLOR_BG[shown]} ${
-        big ? "h-28 w-20 text-4xl" : "h-24 w-16 text-3xl"
+      className={`relative grid place-items-center rounded-2xl border-2 border-white/70 ${COLOR_BG[shown]} ${
+        big ? "h-32 w-24" : "h-28 w-20"
       } font-extrabold text-white shadow-pop-sm`}
     >
-      <span className="drop-shadow">{label(card)}</span>
+      {/* corner pip for quick scanning */}
+      <span className={`absolute left-1.5 top-1 ${big ? "text-base" : "text-sm"} drop-shadow`}>{label(card)}</span>
+      <span className={`drop-shadow ${big ? "text-5xl" : "text-4xl"}`}>{label(card)}</span>
+      {sub && <span className="absolute bottom-1.5 text-[10px] uppercase tracking-wide drop-shadow">{sub}</span>}
       {card.color === "wild" && color && (
-        <span className={`absolute bottom-1 h-3 w-3 rounded-full ${COLOR_BG[color]} ring-2 ring-white`} />
+        <span className={`absolute right-1.5 top-1.5 h-4 w-4 rounded-full ${COLOR_BG[color]} ring-2 ring-white`} />
       )}
     </div>
   );
@@ -192,7 +207,13 @@ export function UnoView({ view, me, send, pending }: GameViewProps) {
                 key={card.id}
                 disabled={!canPlay || pending}
                 onClick={() => play(card)}
-                className={`flex-none transition ${canPlay ? "hover:-translate-y-2 -translate-y-1" : "opacity-60"}`}
+                className={`flex-none rounded-2xl transition ${
+                  canPlay
+                    ? "-translate-y-2 ring-4 ring-sunny shadow-pop"
+                    : myTurn
+                      ? "opacity-45"
+                      : "opacity-80"
+                }`}
               >
                 <CardFace card={card} />
               </button>
