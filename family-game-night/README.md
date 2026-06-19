@@ -25,10 +25,19 @@ Built with **Next.js (App Router) + TypeScript + Tailwind**, **Supabase**
 
 ### Games
 
-| Phase | Game | Status |
-|------|------|--------|
-| 1 | **Uno** (with optional stacking) | ✅ Playable end-to-end |
-| 2–10 | Go Fish, Trouble, Yahtzee, Dominoes, Sorry, Hearts, Connect Four, Checkers, Battleship, Mancala, Rummy/Gin, Monopoly, plus **Chess** and **Battle Tetris** | 🧩 Slots reserved — add as modules (see "Adding a game") |
+| Game | Players | Status |
+|------|---------|--------|
+| **Uno** (optional stacking) | 2–10 | ✅ Playable |
+| **Go Fish** | 2–6 | ✅ Playable |
+| **Yahtzee** | 2–8 | ✅ Playable |
+| **Connect Four** | 2 | ✅ Playable |
+| **Checkers** | 2 | ✅ Playable |
+| **Battleship** | 2 | ✅ Playable |
+| **Mancala** | 2 | ✅ Playable |
+| Trouble, Dominoes, Sorry, Hearts, Rummy/Gin, **Chess**, **Battle Tetris**, Monopoly | — | 🧩 Next up — each drops in as a module (see "Adding a game") |
+
+Every game ships with unit-tested logic (full-game simulations + invariants like
+card/stone conservation and no-secret-leak checks). 71 logic tests passing.
 
 ---
 
