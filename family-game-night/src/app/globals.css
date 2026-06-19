@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: "Baloo 2", "Fredoka", system-ui, sans-serif;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  @apply bg-gradient-to-b from-[#2b1166] via-[#5b1d8f] to-[#9b2c8a] text-white;
+  background-attachment: fixed;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+/* respect iOS safe areas in standalone PWA mode */
+.safe {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 font-extrabold
+           text-lg shadow-pop active:translate-y-1 active:shadow-pop-sm transition-transform
+           disabled:opacity-40 disabled:active:translate-y-0 select-none;
+  }
+  .btn-primary {
+    @apply btn bg-sunny text-purple-900;
+  }
+  .btn-pink {
+    @apply btn bg-bubble text-white;
+  }
+  .btn-mint {
+    @apply btn bg-mint text-emerald-950;
+  }
+  .btn-ghost {
+    @apply btn bg-white/15 text-white shadow-none active:translate-y-0;
+  }
+  .card-surface {
+    @apply rounded-3xl bg-white/10 backdrop-blur border border-white/15 shadow-xl;
+  }
+  .input {
+    @apply w-full rounded-2xl px-4 py-3 text-lg font-bold text-purple-950 placeholder:text-purple-400
+           bg-white outline-none focus:ring-4 focus:ring-sunny/60;
+  }
+}
+
+/* hide scrollbars on the fun mobile views */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
