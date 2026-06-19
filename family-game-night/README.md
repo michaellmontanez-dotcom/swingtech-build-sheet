@@ -59,35 +59,35 @@ card/stone conservation and no-secret-leak checks). **172 logic tests passing.**
 
 ## 🚀 Deploy (the "online" requirement)
 
-### 1. Create the Supabase project
-1. Go to <https://supabase.com> → **New project**.
-2. Open **SQL Editor** → paste the contents of
-   [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql) → **Run**.
-   This creates `rooms`, `players`, `games`, `hands`, enables RLS, and adds the
-   tables to the Realtime publication.
-3. **Project Settings → API** and copy:
-   - **Project URL** → `SUPABASE_URL`
-   - **anon public** key → `SUPABASE_ANON_KEY`
+Everything below works from a **phone browser** — no computer required. You need
+exactly **3** environment variables, all from Supabase.
+
+### 1. Create the Supabase project (phone-friendly)
+1. Go to <https://supabase.com> → sign in with GitHub → **New project** (set a DB
+   password, pick a region, Create — ~2 min to provision).
+2. Left menu → **SQL Editor → New query** → paste the contents of
+   [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql) →
+   **Run**. (Creates `rooms`, `players`, `games`, `hands`, enables RLS, and adds
+   the tables to the Realtime publication.)
+3. **Project Settings → API** — copy these three values:
+   - **Project URL** → `NEXT_PUBLIC_SUPABASE_URL`
+   - **anon public** key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - **service_role** key → `SUPABASE_SERVICE_ROLE` (⚠️ secret, server only)
 
-### 2. Deploy to Vercel
-1. Import this repo at <https://vercel.com/new>.
-2. **Set the Root Directory to `family-game-night`** (this app lives in a
-   subfolder).
-3. Add **Environment Variables** (Production + Preview):
+### 2. Deploy to Vercel — one tap
 
-   | Name | Value | Exposed to browser? |
-   |------|-------|---------------------|
-   | `NEXT_PUBLIC_SUPABASE_URL` | your Project URL | yes |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon public key | yes |
-   | `SUPABASE_URL` | your Project URL | no |
-   | `SUPABASE_ANON_KEY` | anon public key | no |
-   | `SUPABASE_SERVICE_ROLE` | service_role key | **no — keep secret** |
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmichaellmontanez-dotcom%2Fswingtech-build-sheet&root-directory=family-game-night&project-name=family-game-night&repository-name=family-game-night&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE&envDescription=Paste%20your%20Supabase%20Project%20URL%2C%20anon%20key%2C%20and%20service_role%20key&envLink=https%3A%2F%2Fgithub.com%2Fmichaellmontanez-dotcom%2Fswingtech-build-sheet%2Ftree%2Fmain%2Ffamily-game-night)
 
-   (`NEXT_PUBLIC_APP_URL` is optional; only set it to force a specific origin in
-   the join links/QR. Vercel auto-detects it otherwise.)
-4. **Deploy.** You'll get a public `https://…vercel.app` URL — that's the link
-   you text to the family.
+The button pre-sets the **Root Directory** to `family-game-night` and prompts for
+exactly the 3 variables from step 1 — paste them and tap **Deploy**. You'll get a
+public `https://…vercel.app` URL to text the family.
+
+> Manual alternative: <https://vercel.com/new> → import this repo → set **Root
+> Directory = `family-game-night`** → add the 3 env vars → Deploy.
+
+> The two extra names (`SUPABASE_URL`, `SUPABASE_ANON_KEY`) are **optional** — the
+> server falls back to the `NEXT_PUBLIC_*` ones. `NEXT_PUBLIC_APP_URL` is optional
+> too (Vercel auto-detects the origin for join links/QR).
 
 ### 3. Play
 - Open the URL on the host phone → **Host a Game Night** → share the code / QR.
