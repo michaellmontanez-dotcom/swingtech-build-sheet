@@ -30,6 +30,7 @@ export function useRoom(code: string, me: { id: string; name: string; emoji: str
     let active = true;
     const sb = getBrowserSupabase();
     let channel: RealtimeChannel | null = null;
+    let pollId: ReturnType<typeof setInterval> | null = null;
 
     async function loadPlayers(roomId: string) {
       const { data } = await sb.from("players").select("*").eq("room_id", roomId).order("seat");
@@ -79,10 +80,21 @@ export function useRoom(code: string, me: { id: string; name: string; emoji: str
             await channel!.track({ playerId: me.id, name: me.name, emoji: me.emoji });
           }
         });
+
+      // Safety-net polling: if realtime drops or misses an event, this keeps the
+      // room status, roster, and active-game version converging so the game
+      // start, turn changes, and round transitions never get stuck.
+      pollId = setInterval(() => {
+        if (!active) return;
+        loadRoom(roomRow.id);
+        loadGame(roomRow.id);
+        loadPlayers(roomRow.id);
+      }, 3000);
     })();
 
     return () => {
       active = false;
+      if (pollId) clearInterval(pollId);
       if (channel) getBrowserSupabase().removeChannel(channel);
     };
   }, [code, me?.id, me?.name, me?.emoji]);
