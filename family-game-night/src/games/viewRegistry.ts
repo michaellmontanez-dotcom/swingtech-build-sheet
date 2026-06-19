@@ -10,15 +10,27 @@ import { GoFishView } from "@/games/gofish/View";
 import { CheckersView } from "@/games/checkers/View";
 import { BattleshipView } from "@/games/battleship/View";
 import { MancalaView } from "@/games/mancala/View";
+import { ChessView } from "@/games/chess/View";
+import { HeartsView } from "@/games/hearts/View";
+import { DominoesView } from "@/games/dominoes/View";
+import { TroubleView } from "@/games/trouble/View";
+import { SorryView } from "@/games/sorry/View";
+import { GinRummyView } from "@/games/gin/View";
 
 export const gameViews: Record<string, GameView> = {
   uno: UnoView,
   gofish: GoFishView,
+  hearts: HeartsView,
+  gin: GinRummyView,
   yahtzee: YahtzeeView,
+  dominoes: DominoesView,
   connect4: ConnectFourView,
   checkers: CheckersView,
+  chess: ChessView,
   battleship: BattleshipView,
   mancala: MancalaView,
+  trouble: TroubleView,
+  sorry: SorryView,
 };
 
 export function getGameView(type: string): GameView | undefined {

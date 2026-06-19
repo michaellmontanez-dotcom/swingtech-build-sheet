@@ -8,8 +8,28 @@ import { gofish } from "@/games/gofish/logic";
 import { checkers } from "@/games/checkers/logic";
 import { battleship } from "@/games/battleship/logic";
 import { mancala } from "@/games/mancala/logic";
+import { chess } from "@/games/chess/logic";
+import { hearts } from "@/games/hearts/logic";
+import { dominoes } from "@/games/dominoes/logic";
+import { trouble } from "@/games/trouble/logic";
+import { sorry } from "@/games/sorry/logic";
+import { gin } from "@/games/gin/logic";
 
-const MODULES: GameModule[] = [uno, gofish, yahtzee, connect4, checkers, battleship, mancala];
+const MODULES: GameModule[] = [
+  uno,
+  gofish,
+  hearts,
+  gin,
+  yahtzee,
+  dominoes,
+  connect4,
+  checkers,
+  chess,
+  battleship,
+  mancala,
+  trouble,
+  sorry,
+];
 
 export const gameModules: Record<string, GameModule> = Object.fromEntries(
   MODULES.map((m) => [m.type, m])

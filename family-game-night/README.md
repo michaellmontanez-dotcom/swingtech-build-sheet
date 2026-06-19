@@ -34,10 +34,16 @@ Built with **Next.js (App Router) + TypeScript + Tailwind**, **Supabase**
 | **Checkers** | 2 | ✅ Playable |
 | **Battleship** | 2 | ✅ Playable |
 | **Mancala** | 2 | ✅ Playable |
-| Trouble, Dominoes, Sorry, Hearts, Rummy/Gin, **Chess**, **Battle Tetris**, Monopoly | — | 🧩 Next up — each drops in as a module (see "Adding a game") |
+| **Hearts** | 4 | ✅ Playable |
+| **Gin Rummy** | 2 | ✅ Playable |
+| **Dominoes** (Block/Draw) | 2–4 | ✅ Playable |
+| **Chess** | 2 | ✅ Playable |
+| **Trouble** | 2–4 | ✅ Playable |
+| **Sorry!** | 2–4 | ✅ Playable |
+| **Battle Tetris**, **Monopoly** | — | 🧩 In progress |
 
 Every game ships with unit-tested logic (full-game simulations + invariants like
-card/stone conservation and no-secret-leak checks). 71 logic tests passing.
+card/stone conservation and no-secret-leak checks). 144 logic tests passing.
 
 ---
 
