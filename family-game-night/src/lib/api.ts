@@ -3,11 +3,22 @@
 // Thin client wrappers around the authoritative server endpoints.
 
 async function postJSON<T>(url: string, body: unknown): Promise<T> {
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  // Abort if the server hangs so the UI never gets stuck in a "pending" state.
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 12000);
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: ctrl.signal,
+    });
+  } catch (e) {
+    clearTimeout(timer);
+    throw new Error((e as Error).name === "AbortError" ? "Server timed out — try again." : "Network error — check your connection.");
+  }
+  clearTimeout(timer);
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
   return data as T;

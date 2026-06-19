@@ -60,7 +60,7 @@ function CardFace({ card, color, big }: { card: UnoCard; color?: string; big?: b
   );
 }
 
-export function UnoView({ view, me, send, pending }: GameViewProps) {
+export function UnoView({ view, me, send, pending, error }: GameViewProps) {
   const [pendingWild, setPendingWild] = useState<string | null>(null);
   const v = view as {
     top: UnoCard;
