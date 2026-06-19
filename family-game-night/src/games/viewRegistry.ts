@@ -16,6 +16,7 @@ import { DominoesView } from "@/games/dominoes/View";
 import { TroubleView } from "@/games/trouble/View";
 import { SorryView } from "@/games/sorry/View";
 import { GinRummyView } from "@/games/gin/View";
+import { TetrisView } from "@/games/tetris/View";
 
 export const gameViews: Record<string, GameView> = {
   uno: UnoView,
@@ -31,6 +32,7 @@ export const gameViews: Record<string, GameView> = {
   mancala: MancalaView,
   trouble: TroubleView,
   sorry: SorryView,
+  tetris: TetrisView,
 };
 
 export function getGameView(type: string): GameView | undefined {
