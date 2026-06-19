@@ -46,7 +46,7 @@ export function useGameView(game: GameRow | null, playerId: string) {
     if (!gameId) return;
     const id = setInterval(() => {
       if (!pendingRef.current) refresh();
-    }, 2500);
+    }, 1500);
     return () => clearInterval(id);
   }, [gameId, refresh]);
 
