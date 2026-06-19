@@ -40,10 +40,20 @@ Built with **Next.js (App Router) + TypeScript + Tailwind**, **Supabase**
 | **Chess** | 2 | ✅ Playable |
 | **Trouble** | 2–4 | ✅ Playable |
 | **Sorry!** | 2–4 | ✅ Playable |
-| **Battle Tetris**, **Monopoly** | — | 🧩 In progress |
+| **Battle Tetris** (real-time) | 2–4 | ✅ Playable |
+| **Monopoly** | 2–6 | ✅ Playable |
 
 Every game ships with unit-tested logic (full-game simulations + invariants like
-card/stone conservation and no-secret-leak checks). 144 logic tests passing.
+card/stone conservation and no-secret-leak checks). **172 logic tests passing.**
+
+> **Battle Tetris** is the one real-time game; since this stack is HTTP + DB
+> per move, gravity is driven by client `tick` moves and play is best-effort
+> real-time rather than frame-perfect — great for casual family duels.
+> **Monopoly** implements the common paths faithfully (movement/GO, buying,
+> auctions, full rent tables incl. monopolies/houses/railroads/utilities,
+> even-build houses & hotels, mortgaging, jail, Chance/Chest, bankruptcy); a
+> few rare edges are simplified and documented in code comments (no
+> player-to-player trading; nearest-railroad/utility cards charge standard rent).
 
 ---
 

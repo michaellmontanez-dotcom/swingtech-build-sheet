@@ -15,6 +15,7 @@ import { trouble } from "@/games/trouble/logic";
 import { sorry } from "@/games/sorry/logic";
 import { gin } from "@/games/gin/logic";
 import { tetris } from "@/games/tetris/logic";
+import { monopoly } from "@/games/monopoly/logic";
 
 const MODULES: GameModule[] = [
   uno,
@@ -31,6 +32,7 @@ const MODULES: GameModule[] = [
   trouble,
   sorry,
   tetris,
+  monopoly,
 ];
 
 export const gameModules: Record<string, GameModule> = Object.fromEntries(
