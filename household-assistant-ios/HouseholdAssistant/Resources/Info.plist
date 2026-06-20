@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>Household Assistant</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>UILaunchScreen</key>
+	<dict/>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+
+	<!-- Permission usage strings (required or the app crashes on first request). -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Your assistant listens to spoken commands while it is active.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Speech is transcribed on-device so your assistant can understand commands.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Your assistant reads and schedules events and checks the household calendar for conflicts.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Your assistant reads and schedules events and checks the household calendar for conflicts.</string>
+	<key>NSRemindersUsageDescription</key>
+	<string>Your assistant captures lists and tasks into Reminders.</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>Your assistant captures lists and tasks into Reminders.</string>
+
+	<!-- Secrets injected from Secrets.xcconfig at build time. Read via Secrets.swift. -->
+	<key>CLAUDE_API_KEY</key>
+	<string>$(CLAUDE_API_KEY)</string>
+	<key>ELEVENLABS_API_KEY</key>
+	<string>$(ELEVENLABS_API_KEY)</string>
+	<key>ELEVENLABS_VOICE_JARVIS</key>
+	<string>$(ELEVENLABS_VOICE_JARVIS)</string>
+	<key>ELEVENLABS_VOICE_SNARF</key>
+	<string>$(ELEVENLABS_VOICE_SNARF)</string>
+	<key>ELEVENLABS_VOICE_SCHOOL</key>
+	<string>$(ELEVENLABS_VOICE_SCHOOL)</string>
+	<key>ELEVENLABS_VOICE_HOME</key>
+	<string>$(ELEVENLABS_VOICE_HOME)</string>
+</dict>
+</plist>
