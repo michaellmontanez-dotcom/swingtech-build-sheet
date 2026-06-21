@@ -12,6 +12,7 @@ export function useGameView(game: GameRow | null, playerId: string) {
   const [view, setView] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [info, setInfo] = useState<string>("ready");
   const lastVersion = useRef<number>(-1);
   const pendingRef = useRef(false);
   const gameId = game?.id ?? null;
@@ -52,16 +53,22 @@ export function useGameView(game: GameRow | null, playerId: string) {
 
   const send = useCallback(
     async (move: Move) => {
-      if (!gameId) return;
+      if (!gameId) {
+        setInfo(`no gameId (move ${move.type})`);
+        return;
+      }
       setPending(true);
       pendingRef.current = true;
       setError(null);
+      setInfo(`sending ${move.type}…`);
       try {
         const res = await apiSendMove(gameId, playerId, move);
         if (res.view) setView(res.view); // instant local update for the mover
+        setInfo(`ok ${move.type} → v${res.version}`);
       } catch (e) {
         const msg = (e as Error).message;
         setError(msg);
+        setInfo(`ERR ${move.type}: ${msg}`);
         // Any rejection (conflict, "not your turn", stale state) → re-sync from
         // the server so the screen matches reality and the player isn't stuck.
         refresh();
@@ -73,5 +80,5 @@ export function useGameView(game: GameRow | null, playerId: string) {
     [gameId, playerId, refresh]
   );
 
-  return { view, error, pending, send, refresh, setError };
+  return { view, error, pending, send, refresh, setError, info };
 }
