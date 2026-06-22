@@ -18,6 +18,12 @@ body {
   overscroll-behavior-y: none;
 }
 
+/* Make taps on interactive controls fire immediately and not get swallowed as
+   the start of a scroll/pan gesture (cards live inside overflow-x-auto rows). */
+button:not(:disabled) {
+  touch-action: manipulation;
+}
+
 /* respect iOS safe areas in standalone PWA mode */
 .safe {
   padding-top: env(safe-area-inset-top);
