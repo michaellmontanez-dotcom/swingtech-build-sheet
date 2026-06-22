@@ -1,7 +1,7 @@
 // Minimal service worker — enough to make the app installable as a PWA and to
 // give an offline-friendly shell. Game state is always live (Supabase Realtime),
 // so we deliberately use network-first for navigations and never cache API calls.
-const CACHE = "gamenight-v1";
+const CACHE = "gamenight-v2";
 const APP_SHELL = ["/", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (event) => {
@@ -25,6 +25,12 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   // Never intercept API / Supabase / realtime traffic.
   if (url.pathname.startsWith("/api/") || url.origin !== self.location.origin) return;
+
+  // Never cache-first the Next.js build output. These chunks are content-hashed
+  // per deploy; serving a stale chunk against fresh HTML breaks hydration so no
+  // event handlers attach and every tap silently does nothing. Always go to the
+  // network for them (they're immutable per hash, so there's nothing to gain).
+  if (url.pathname.startsWith("/_next/")) return;
 
   // Network-first for navigations so players always get fresh room state,
   // falling back to the cached shell when offline.

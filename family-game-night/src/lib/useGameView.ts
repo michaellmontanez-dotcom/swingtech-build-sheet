@@ -15,13 +15,21 @@ export function useGameView(game: GameRow | null, playerId: string) {
   const [info, setInfo] = useState<string>("ready");
   const lastVersion = useRef<number>(-1);
   const pendingRef = useRef(false);
+  // Highest game version we've actually rendered. A poll/response that resolves
+  // with an OLDER version must NOT overwrite a newer view — otherwise an
+  // in-flight refresh that started before your move snaps the board back to the
+  // pre-move state and the move looks like it did nothing.
+  const viewVersion = useRef<number>(-1);
   const gameId = game?.id ?? null;
 
   const refresh = useCallback(async () => {
     if (!gameId) return;
     try {
-      const { view } = await fetchView(gameId, playerId);
-      setView(view);
+      const { view, version } = await fetchView(gameId, playerId);
+      if (version >= viewVersion.current) {
+        viewVersion.current = version;
+        setView(view);
+      }
     } catch (e) {
       setError((e as Error).message);
     }
@@ -63,7 +71,10 @@ export function useGameView(game: GameRow | null, playerId: string) {
       setInfo(`sending ${move.type}…`);
       try {
         const res = await apiSendMove(gameId, playerId, move);
-        if (res.view) setView(res.view); // instant local update for the mover
+        if (res.view) {
+          viewVersion.current = res.version; // protect this update from stale polls
+          setView(res.view); // instant local update for the mover
+        }
         setInfo(`ok ${move.type} → v${res.version}`);
       } catch (e) {
         const msg = (e as Error).message;
