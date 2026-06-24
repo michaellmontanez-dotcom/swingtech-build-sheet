@@ -1,0 +1,47 @@
+# XcodeGen project definition for the Household Assistant iOS app.
+#
+# Generate the Xcode project with:
+#   brew install xcodegen
+#   cd household-assistant-ios
+#   cp HouseholdAssistant/Resources/Secrets.example.xcconfig HouseholdAssistant/Resources/Secrets.xcconfig
+#   # fill in your API keys + ElevenLabs voice IDs in Secrets.xcconfig
+#   xcodegen generate
+#   open HouseholdAssistant.xcodeproj
+#
+# Secrets.xcconfig is gitignored — keys never get committed.
+
+name: HouseholdAssistant
+
+options:
+  bundleIdPrefix: com.swingtech
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_LANGUAGE: en
+    TARGETED_DEVICE_FAMILY: "1" # iPhone
+
+configFiles:
+  Debug: HouseholdAssistant/Resources/Secrets.xcconfig
+  Release: HouseholdAssistant/Resources/Secrets.xcconfig
+
+targets:
+  HouseholdAssistant:
+    type: application
+    platform: iOS
+    sources:
+      - path: HouseholdAssistant
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.swingtech.householdassistant
+        INFOPLIST_FILE: HouseholdAssistant/Resources/Info.plist
+        CODE_SIGN_ENTITLEMENTS: HouseholdAssistant/Resources/HouseholdAssistant.entitlements
+        GENERATE_INFOPLIST_FILE: NO
+        ENABLE_PREVIEWS: YES
+        # Your Apple Developer Team ID lives in Secrets.xcconfig as DEVELOPMENT_TEAM.
+        DEVELOPMENT_TEAM: $(DEVELOPMENT_TEAM)
