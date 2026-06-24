@@ -1,22 +1,20 @@
-import { NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Temporary diagnostic: dump the live server-side truth for a room so we can see
-// whether moves persist, whose turn the server thinks it is, whether both phones
-// are in the SAME game, and whether duplicate game rows exist. Returns only
-// public/shared info (never the hidden `hands.__full__` secret state).
+// Temporary diagnostic: pretty-printed, focused on rooms that are currently
+// playing, so we can see at a glance whether both phones are in the SAME room
+// and whether the latest move persisted. Public/shared info only.
 export async function GET(req: Request) {
   const code = new URL(req.url).searchParams.get("code")?.toUpperCase();
   const db = getServiceSupabase();
 
   try {
-    let roomsQ = db.from("rooms").select("*").order("created_at", { ascending: false }).limit(10);
+    let roomsQ = db.from("rooms").select("*").order("created_at", { ascending: false }).limit(6);
     if (code) roomsQ = db.from("rooms").select("*").eq("code", code).limit(1);
     const { data: rooms, error } = await roomsQ;
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return json({ error: error.message });
 
     const out = [];
     for (const room of rooms ?? []) {
@@ -26,35 +24,26 @@ export async function GET(req: Request) {
       ]);
       const latest = games?.[0];
       const ps = (latest?.public_state ?? {}) as Record<string, unknown>;
+      const playerIds = new Set((players ?? []).map((p) => String(p.id)));
       out.push({
-        code: room.code,
-        roomStatus: room.status,
-        currentGame: room.current_game,
-        hostIdTail: String(room.host_player_id).slice(-5),
-        players: (players ?? []).map((p) => ({
-          idTail: String(p.id).slice(-5),
-          name: p.name,
-          seat: p.seat,
-          host: p.is_host,
-          connected: p.connected,
-        })),
-        gameCount: games?.length ?? 0,
-        allGameVersions: (games ?? []).map((g) => ({ type: g.game_type, v: g.version, status: g.status })),
+        CODE: room.code,
+        status: room.status,
+        host_in_players: playerIds.has(String(room.host_player_id)),
+        players: (players ?? []).map((p) => `seat${p.seat} ${p.name} …${String(p.id).slice(-5)}${p.is_host ? " (host)" : ""}${p.connected ? "" : " [away]"}`),
         latestGame: latest
-          ? {
-              id: latest.id.slice(-6),
-              type: latest.game_type,
-              version: latest.version,
-              status: latest.status,
-              // expose just the turn-relevant bits if present
-              activePlayerIdTail: ps.activePlayerId ? String(ps.activePlayerId).slice(-5) : undefined,
-              turnHint: ps.turn ?? ps.phase ?? undefined,
-            }
-          : null,
+          ? `${latest.game_type} v${latest.version} ${latest.status} active=…${ps.activePlayerId ? String(ps.activePlayerId).slice(-5) : "?"}`
+          : "none",
+        games: (games ?? []).map((g) => `${g.game_type} v${g.version} ${g.status}`),
       });
     }
-    return NextResponse.json({ now: new Date().toISOString(), rooms: out });
+    return json({ now: new Date().toISOString(), rooms: out });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    return json({ error: (e as Error).message });
   }
+}
+
+function json(obj: unknown) {
+  return new Response(JSON.stringify(obj, null, 2), {
+    headers: { "content-type": "application/json; charset=utf-8" },
+  });
 }
