@@ -1,18 +1,41 @@
 "use client";
 import { useEffect } from "react";
 
-// Registers the service worker so the app qualifies as an installable PWA.
+// Registers the service worker so the app qualifies as an installable PWA, and
+// auto-reloads ONCE when a new version takes control so phones running stale
+// cached code self-heal without anyone deleting/re-adding the home-screen icon.
 export function ServiceWorker() {
   useEffect(() => {
     if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
+
+    let refreshing = false;
+    const onControllerChange = () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    };
+    navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
+
     const onLoad = () => {
-      navigator.serviceWorker.register("/sw.js").catch(() => {
-        /* ignore — app still works without it, just not installable offline */
-      });
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((reg) => {
+          // pull a fresh worker if one is available
+          reg.update().catch(() => {});
+          // if an updated worker is waiting, let it take over immediately
+          if (reg.waiting) reg.waiting.postMessage("SKIP_WAITING");
+        })
+        .catch(() => {
+          /* ignore — app still works without it, just not installable offline */
+        });
     };
     if (document.readyState === "complete") onLoad();
     else window.addEventListener("load", onLoad);
-    return () => window.removeEventListener("load", onLoad);
+
+    return () => {
+      window.removeEventListener("load", onLoad);
+      navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
+    };
   }, []);
   return null;
 }

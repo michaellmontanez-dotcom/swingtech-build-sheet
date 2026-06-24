@@ -20,6 +20,7 @@ export function useGameView(game: GameRow | null, playerId: string) {
   // in-flight refresh that started before your move snaps the board back to the
   // pre-move state and the move looks like it did nothing.
   const viewVersion = useRef<number>(-1);
+  const gameIdRef = useRef<string | null>(null);
   const gameId = game?.id ?? null;
 
   const refresh = useCallback(async () => {
@@ -40,7 +41,16 @@ export function useGameView(game: GameRow | null, playerId: string) {
     if (!game) {
       setView(null);
       lastVersion.current = -1;
+      viewVersion.current = -1;
+      gameIdRef.current = null;
       return;
+    }
+    if (game.id !== gameIdRef.current) {
+      // New game (e.g. next round): reset the version guards so the fresh game's
+      // low version numbers aren't ignored as "stale".
+      gameIdRef.current = game.id;
+      lastVersion.current = -1;
+      viewVersion.current = -1;
     }
     if (game.version !== lastVersion.current) {
       lastVersion.current = game.version;
