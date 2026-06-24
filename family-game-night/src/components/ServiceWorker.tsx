@@ -16,14 +16,17 @@ export function ServiceWorker() {
     };
     navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
 
+    let updateTimer: ReturnType<typeof setInterval> | null = null;
     const onLoad = () => {
       navigator.serviceWorker
         .register("/sw.js")
         .then((reg) => {
-          // pull a fresh worker if one is available
           reg.update().catch(() => {});
-          // if an updated worker is waiting, let it take over immediately
           if (reg.waiting) reg.waiting.postMessage("SKIP_WAITING");
+          // Re-check for a new deploy periodically so an app left OPEN still
+          // picks up fixes (and auto-reloads via controllerchange) without the
+          // user having to close and reopen it.
+          updateTimer = setInterval(() => reg.update().catch(() => {}), 60000);
         })
         .catch(() => {
           /* ignore — app still works without it, just not installable offline */
@@ -35,6 +38,7 @@ export function ServiceWorker() {
     return () => {
       window.removeEventListener("load", onLoad);
       navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
+      if (updateTimer) clearInterval(updateTimer);
     };
   }, []);
   return null;
