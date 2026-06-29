@@ -5,67 +5,48 @@ import { fetchView, sendMove as apiSendMove } from "@/lib/api";
 import type { GameRow } from "@/lib/types";
 import type { Move } from "@/games/types";
 
-// Owns a player's private, redacted view of the active game. The public version
-// (from the realtime `games` row) is the trigger: whenever it changes, we pull a
-// fresh private view from the server (which contains this player's secret hand).
+// Owns a player's private, redacted view of the active game.
+//
+// Sync model: every render of the view is the result of a numbered operation
+// (a poll, a version-triggered refresh, or a move). We only apply a result if it
+// belongs to the NEWEST operation issued. This makes the newest request always
+// win and makes it IMPOSSIBLE to permanently freeze the view — there is no
+// version gate that can get "stuck high" across games. A response that lost the
+// race is simply dropped; the next 1s poll re-pulls the freshest server state.
 export function useGameView(game: GameRow | null, playerId: string) {
   const [view, setView] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [info, setInfo] = useState<string>("ready");
-  const lastVersion = useRef<number>(-1);
-  const pendingRef = useRef(false);
-  // Highest game version we've actually rendered. A poll/response that resolves
-  // with an OLDER version must NOT overwrite a newer view — otherwise an
-  // in-flight refresh that started before your move snaps the board back to the
-  // pre-move state and the move looks like it did nothing.
-  const viewVersion = useRef<number>(-1);
-  const gameIdRef = useRef<string | null>(null);
+  const opSeq = useRef(0); // monotonic; newest issued operation wins
   const gameId = game?.id ?? null;
 
   const refresh = useCallback(async () => {
     if (!gameId) return;
+    const op = ++opSeq.current;
     try {
-      const { view, version } = await fetchView(gameId, playerId);
-      if (version >= viewVersion.current) {
-        viewVersion.current = version;
-        setView(view);
-      }
+      const { view } = await fetchView(gameId, playerId);
+      if (op === opSeq.current) setView(view); // apply only if still the newest op
     } catch (e) {
       setError((e as Error).message);
     }
   }, [gameId, playerId]);
 
-  // refetch whenever the public version advances (or the game changes)
+  // Pull fresh state whenever the game changes or its public version advances.
   useEffect(() => {
     if (!game) {
       setView(null);
-      lastVersion.current = -1;
-      viewVersion.current = -1;
-      gameIdRef.current = null;
       return;
     }
-    if (game.id !== gameIdRef.current) {
-      // New game (e.g. next round): reset the version guards so the fresh game's
-      // low version numbers aren't ignored as "stale".
-      gameIdRef.current = game.id;
-      lastVersion.current = -1;
-      viewVersion.current = -1;
-    }
-    if (game.version !== lastVersion.current) {
-      lastVersion.current = game.version;
-      refresh();
-    }
+    refresh();
   }, [game, game?.id, game?.version, refresh]);
 
-  // Safety net: poll the authoritative view on a timer so a phone can never get
-  // stuck on a stale turn if a realtime update is missed. The /view endpoint is
-  // the source of truth (current state + this player's secret hand).
+  // Always-on safety poll: the source of truth is the server, fetched every
+  // second, so a phone can never get stuck on a stale turn even if realtime
+  // never delivers a single event.
   useEffect(() => {
     if (!gameId) return;
-    const id = setInterval(() => {
-      if (!pendingRef.current) refresh();
-    }, 1000);
+    const id = setInterval(() => refresh(), 1000);
     return () => clearInterval(id);
   }, [gameId, refresh]);
 
@@ -75,27 +56,21 @@ export function useGameView(game: GameRow | null, playerId: string) {
         setInfo(`no gameId (move ${move.type})`);
         return;
       }
+      const op = ++opSeq.current;
       setPending(true);
-      pendingRef.current = true;
       setError(null);
       setInfo(`sending ${move.type}…`);
       try {
         const res = await apiSendMove(gameId, playerId, move);
-        if (res.view) {
-          viewVersion.current = res.version; // protect this update from stale polls
-          setView(res.view); // instant local update for the mover
-        }
+        if (res.view && op === opSeq.current) setView(res.view); // instant update for the mover
         setInfo(`ok ${move.type} → v${res.version}`);
       } catch (e) {
         const msg = (e as Error).message;
         setError(msg);
         setInfo(`ERR ${move.type}: ${msg}`);
-        // Any rejection (conflict, "not your turn", stale state) → re-sync from
-        // the server so the screen matches reality and the player isn't stuck.
-        refresh();
+        refresh(); // re-sync from the server on any rejection
       } finally {
         setPending(false);
-        pendingRef.current = false;
       }
     },
     [gameId, playerId, refresh]

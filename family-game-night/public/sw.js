@@ -1,7 +1,7 @@
 // Minimal service worker — enough to make the app installable as a PWA and to
 // give an offline-friendly shell. Game state is always live (Supabase Realtime),
 // so we deliberately use network-first for navigations and never cache API calls.
-const CACHE = "gamenight-v2";
+const CACHE = "gamenight-v3";
 const APP_SHELL = ["/", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (event) => {
@@ -12,9 +12,21 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
-    ).then(() => self.clients.claim())
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)));
+      await self.clients.claim();
+      // Force any already-open page to reload under THIS fresh worker so it runs
+      // the latest chunks. This is what actually breaks iOS's stale-PWA grip:
+      // the new worker drives the reload, so it works even when the page's own
+      // JavaScript is the old, broken version that never updates on its own.
+      const wins = await self.clients.matchAll({ type: "window" });
+      for (const win of wins) {
+        // only reload pages that were already controlled (an UPDATE), so the
+        // very first install of the app doesn't double-load.
+        if (win.url) win.navigate(win.url).catch(() => {});
+      }
+    })()
   );
 });
 
