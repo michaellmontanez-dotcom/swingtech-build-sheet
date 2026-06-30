@@ -61,7 +61,9 @@ export type SoundName =
   | "uno"       // someone shouted UNO
   | "win"       // you won
   | "lose"      // someone else won
-  | "error";    // illegal action
+  | "error"     // illegal action
+  | "markx"     // X placed (tic-tac-toe)
+  | "marko";    // O placed (tic-tac-toe)
 
 export function playSound(name: SoundName) {
   if (isMuted()) return;
@@ -98,6 +100,12 @@ export function playSound(name: SoundName) {
       break;
     case "error":
       tone(c, 180, 0, 0.16, "square", 0.14);
+      break;
+    case "markx":
+      tone(c, 540, 0, 0.08, "triangle", 0.16);
+      break;
+    case "marko":
+      tone(c, 360, 0, 0.09, "triangle", 0.16);
       break;
   }
 }
