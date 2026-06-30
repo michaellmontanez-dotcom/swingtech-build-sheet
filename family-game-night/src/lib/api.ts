@@ -48,7 +48,12 @@ export function sendMove(gameId: string, playerId: string, move: { type: string;
 }
 
 export async function fetchView(gameId: string, playerId: string) {
-  const res = await fetch(`/api/games/${gameId}/view?playerId=${encodeURIComponent(playerId)}`, { cache: "no-store" });
+  // `_` is a cache-buster: a unique URL per request guarantees no browser/CDN
+  // layer can hand back a stale snapshot of the game.
+  const res = await fetch(
+    `/api/games/${gameId}/view?playerId=${encodeURIComponent(playerId)}&_=${Date.now()}-${Math.round(Math.random() * 1e6)}`,
+    { cache: "no-store", headers: { "Cache-Control": "no-store" } }
+  );
   if (!res.ok) throw new Error("Failed to load view");
   return (await res.json()) as { view: unknown; version: number };
 }

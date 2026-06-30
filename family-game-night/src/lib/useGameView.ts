@@ -62,7 +62,9 @@ export function useGameView(game: GameRow | null, playerId: string) {
       setInfo(`sending ${move.type}…`);
       try {
         const res = await apiSendMove(gameId, playerId, move);
-        if (res.view && op === opSeq.current) setView(res.view); // instant update for the mover
+        // The move result is authoritative — always apply it for the mover.
+        // (Polls are what get the op-gate, to drop stale ones.)
+        if (res.view) setView(res.view);
         setInfo(`ok ${move.type} → v${res.version}`);
       } catch (e) {
         const msg = (e as Error).message;
