@@ -5,9 +5,38 @@ import type { GameViewProps } from "@/games/viewTypes";
 import { Fireworks } from "@/components/Fireworks";
 import { playSound } from "@/lib/sound";
 
+type Cell = "X" | "O" | null;
+
+// Position the strike-through line over the winning three cells.
+function strikeStyle(line: number[]): React.CSSProperties | null {
+  const key = line.join("");
+  const rows: Record<string, number> = { "012": 0, "345": 1, "678": 2 };
+  const cols: Record<string, number> = { "036": 0, "147": 1, "258": 2 };
+  if (key in rows) {
+    const r = rows[key];
+    return { top: `${(r + 0.5) * 33.33}%`, left: "4%", right: "4%", height: 8, transform: "translateY(-50%)" };
+  }
+  if (key in cols) {
+    const c = cols[key];
+    return { left: `${(c + 0.5) * 33.33}%`, top: "4%", bottom: "4%", width: 8, transform: "translateX(-50%)" };
+  }
+  // diagonals
+  const rot = key === "048" ? 45 : -45;
+  return { top: "50%", left: "50%", width: "128%", height: 8, transform: `translate(-50%,-50%) rotate(${rot}deg)` };
+}
+
+function GlyphMark({ mark, faint }: { mark: Exclude<Cell, null>; faint?: boolean }) {
+  const color = mark === "X" ? "text-sky-300" : "text-rose-300";
+  return (
+    <span key={mark} className={`${color} ${faint ? "opacity-25" : "animate-pop drop-shadow"} text-6xl font-black leading-none`}>
+      {mark}
+    </span>
+  );
+}
+
 export function TicTacToeView({ view, me, send, pending, players }: GameViewProps) {
   const v = view as {
-    board: (string | null)[];
+    board: Cell[];
     activePlayerId: string;
     finished: boolean;
     winnerId: string | null;
@@ -25,16 +54,25 @@ export function TicTacToeView({ view, me, send, pending, players }: GameViewProp
   const win = new Set(v.winningLine ?? []);
 
   // sounds on state changes
-  const prev = useRef<{ filled: number; finished: boolean; myTurn: boolean } | null>(null);
+  const prev = useRef<{ board: string; finished: boolean; myTurn: boolean } | null>(null);
   useEffect(() => {
-    const filled = v.board.filter(Boolean).length;
+    const boardStr = v.board.map((c) => c ?? ".").join("");
     const p = prev.current;
     if (p) {
-      if (v.finished && !p.finished) playSound(v.winnerId === me.id ? "win" : v.winnerId ? "lose" : "draw");
-      else if (filled > p.filled) playSound("play");
+      if (v.finished && !p.finished) {
+        playSound(v.winnerId === me.id ? "win" : v.winnerId ? "lose" : "draw");
+      } else {
+        // find the newly-placed mark and play its sound
+        for (let i = 0; i < 9; i++) {
+          if (p.board[i] === "." && boardStr[i] !== ".") {
+            playSound(boardStr[i] === "X" ? "markx" : "marko");
+            break;
+          }
+        }
+      }
       if (myTurn && !p.myTurn && !v.finished) playSound("turn");
     }
-    prev.current = { filled, finished: v.finished, myTurn };
+    prev.current = { board: boardStr, finished: v.finished, myTurn };
   }, [v, myTurn, me.id]);
 
   return (
@@ -44,10 +82,11 @@ export function TicTacToeView({ view, me, send, pending, players }: GameViewProp
         {v.players.map((p) => {
           const active = p.id === v.activePlayerId && !v.finished;
           return (
-            <div key={p.id} className={`rounded-2xl px-4 py-2 text-center ${active ? "bg-sunny text-purple-900 ring-2 ring-white" : "bg-white/10"}`}>
-              <div className="text-2xl leading-none">{emojiOf(p.id)}</div>
-              <div className="text-sm font-extrabold">
-                {p.id === me.id ? "You" : p.name} · {p.mark}
+            <div key={p.id} className={`flex items-center gap-2 rounded-2xl px-4 py-2 ${active ? "bg-sunny text-purple-900 ring-2 ring-white" : "bg-white/10"}`}>
+              <span className="text-2xl leading-none">{emojiOf(p.id)}</span>
+              <div className="text-left">
+                <div className="text-sm font-extrabold leading-tight">{p.id === me.id ? "You" : p.name}</div>
+                <div className={`text-xs font-black ${p.mark === "X" ? "text-sky-400" : "text-rose-400"}`}>plays {p.mark}</div>
               </div>
             </div>
           );
@@ -70,31 +109,43 @@ export function TicTacToeView({ view, me, send, pending, players }: GameViewProp
       </div>
 
       {/* board */}
-      <div className="grid grid-cols-3 gap-2">
-        {v.board.map((markCell, i) => {
-          const open = myTurn && markCell === null && !pending;
-          const isWin = win.has(i);
-          return (
-            <button
-              key={i}
-              disabled={!open}
-              onClick={() => send({ type: "mark", cell: i })}
-              className={`grid h-24 w-24 place-items-center rounded-2xl text-5xl font-black transition ${
-                isWin ? "bg-mint text-emerald-950 animate-pop" : "bg-white/10"
-              } ${open ? "ring-2 ring-sunny/70 active:translate-y-0.5" : ""}`}
-            >
-              <span className={markCell === "X" ? "text-sky-300" : markCell === "O" ? "text-rose-300" : ""}>
-                {markCell ?? (open ? <span className="text-2xl text-white/30">{v.yourMark}</span> : "")}
-              </span>
-            </button>
-          );
-        })}
+      <div className="relative rounded-3xl bg-white/10 p-2 shadow-pop">
+        <div className="grid grid-cols-3 gap-2">
+          {v.board.map((markCell, i) => {
+            const open = myTurn && markCell === null && !pending;
+            const isWin = win.has(i);
+            return (
+              <button
+                key={i}
+                disabled={!open}
+                onClick={() => send({ type: "mark", cell: i })}
+                className={`grid h-24 w-24 place-items-center rounded-2xl transition ${
+                  isWin ? "bg-mint/30" : "bg-purple-950/40"
+                } ${open ? "ring-2 ring-sunny/70 active:scale-95" : ""}`}
+              >
+                {markCell ? (
+                  <GlyphMark mark={markCell} />
+                ) : open ? (
+                  <GlyphMark mark={v.yourMark ?? "X"} faint />
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* winning strike-through */}
+        {v.winningLine && (
+          <span
+            className="pointer-events-none absolute z-10 animate-pop rounded-full bg-sunny shadow-pop"
+            style={strikeStyle(v.winningLine) ?? undefined}
+          />
+        )}
       </div>
 
       {v.finished && (
         <>
           {!v.draw && <Fireworks />}
-          <p className="text-sm text-white/60">Host: tap “Games ▾” up top to play again.</p>
+          <p className="text-sm text-white/60">Host: tap “Games ▾” up top for a rematch or a new game.</p>
         </>
       )}
     </div>
