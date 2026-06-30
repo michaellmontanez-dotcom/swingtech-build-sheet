@@ -84,8 +84,9 @@ function CardBack({ big }: { big?: boolean }) {
   );
 }
 
-export function UnoView({ view, me, send, pending, players }: GameViewProps) {
+export function UnoView({ view, me, send, pending, players, isHost }: GameViewProps) {
   const [pendingWild, setPendingWild] = useState<string | null>(null);
+  const [dismissed, setDismissed] = useState(false);
   const v = view as {
     top: UnoCard;
     currentColor: UnoColor;
@@ -130,6 +131,11 @@ export function UnoView({ view, me, send, pending, players }: GameViewProps) {
     }
     prev.current = { topId: v.top.id, myTurn, finished: v.finished, unoCount };
   }, [v, myTurn, me.id]);
+
+  // Re-arm the celebration for the next game.
+  useEffect(() => {
+    if (!v.finished) setDismissed(false);
+  }, [v.finished]);
 
   function play(card: UnoCard) {
     if (card.color === "wild") {
@@ -304,16 +310,25 @@ export function UnoView({ view, me, send, pending, players }: GameViewProps) {
         </div>
       )}
 
-      {/* winner celebration */}
-      {v.finished && (
+      {/* winner celebration (dismissible — tapping Continue stops the confetti
+          and reveals the “Games ▾” / Play-again controls underneath) */}
+      {v.finished && !dismissed && (
         <div className="fixed inset-0 z-30 grid place-items-center bg-black/70 p-6">
           <Fireworks />
-          <div className="animate-pop card-surface relative z-40 px-8 py-10 text-center">
+          <div className="animate-pop card-surface relative z-40 w-full max-w-xs px-6 py-8 text-center">
             <div className="animate-bounce text-7xl">🏆</div>
             <div className="mt-3 text-3xl font-extrabold text-sunny">
               {v.winnerId === me.id ? "You win! 🎉" : `${nameOf(v.winnerId ?? "")} wins!`}
             </div>
-            <div className="mt-1 text-white/70">{v.winnerId === me.id ? "Hand emptied — nicely played." : "Better luck next round!"}</div>
+            <div className="mt-1 text-white/70">
+              {v.winnerId === me.id ? "Hand emptied — nicely played." : "Better luck next round!"}
+            </div>
+            <button className="btn-primary mt-6 w-full" onClick={() => setDismissed(true)}>
+              Continue →
+            </button>
+            <p className="mt-2 text-xs text-white/50">
+              {isHost ? "Then tap “Games ▾” up top for the next game." : "Then the host picks the next game."}
+            </p>
           </div>
         </div>
       )}
