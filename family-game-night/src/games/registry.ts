@@ -16,6 +16,7 @@ import { sorry } from "@/games/sorry/logic";
 import { gin } from "@/games/gin/logic";
 import { tetris } from "@/games/tetris/logic";
 import { monopoly } from "@/games/monopoly/logic";
+import { tictactoe } from "@/games/tictactoe/logic";
 
 const MODULES: GameModule[] = [
   uno,
@@ -25,6 +26,7 @@ const MODULES: GameModule[] = [
   yahtzee,
   dominoes,
   connect4,
+  tictactoe,
   checkers,
   chess,
   battleship,
