@@ -1,7 +1,46 @@
 // Minimal service worker — enough to make the app installable as a PWA and to
 // give an offline-friendly shell. Game state is always live (Supabase Realtime),
 // so we deliberately use network-first for navigations and never cache API calls.
-const CACHE = "gamenight-v3";
+const CACHE = "gamenight-v4";
+
+// --- Push notifications ----------------------------------------------------
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = {};
+  }
+  event.waitUntil(
+    (async () => {
+      // Don't buzz the player if they're already looking at the app.
+      const wins = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      const visible = wins.some((w) => w.visibilityState === "visible");
+      if (visible) return;
+      await self.registration.showNotification(data.title || "Game Night", {
+        body: data.body || "It's your turn!",
+        icon: "/icons/icon-192.png",
+        badge: "/icons/icon-192.png",
+        tag: data.tag || "gamenight",
+        renotify: true,
+        data: { url: data.url || "/" },
+      });
+    })()
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification.data && event.notification.data.url ? event.notification.data.url : "/";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((wins) => {
+      for (const w of wins) {
+        if ("focus" in w) return w.focus();
+      }
+      return self.clients.openWindow(url);
+    })
+  );
+});
 const APP_SHELL = ["/", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (event) => {
