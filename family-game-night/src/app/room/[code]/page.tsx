@@ -56,6 +56,20 @@ export default function RoomPage({ params }: { params: { code: string } }) {
     }
   }
 
+  async function onRematch() {
+    if (!me || !game) return;
+    setActionError("");
+    setBusy(true);
+    try {
+      // restart the same game with the current players (default options)
+      await startGame(code, me.id, game.game_type);
+    } catch (e) {
+      setActionError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (loading || !me) {
     return <div className="grid min-h-full place-items-center text-xl text-white/70 animate-pulse">Loading room…</div>;
   }
@@ -118,13 +132,18 @@ export default function RoomPage({ params }: { params: { code: string } }) {
       )}
 
       {inGame && room.status === "finished" && (
-        <div className="card-surface p-4 text-center">
+        <div className="card-surface space-y-2 p-4 text-center">
           {isHost ? (
-            <button className="btn-primary w-full" onClick={onBackToPicker}>
-              🔁 Play another game
-            </button>
+            <>
+              <button className="btn-primary w-full" onClick={onRematch} disabled={busy}>
+                {busy ? "Starting…" : "🔁 Rematch — same game"}
+              </button>
+              <button className="btn-ghost w-full" onClick={onBackToPicker} disabled={busy}>
+                🎲 Pick a different game
+              </button>
+            </>
           ) : (
-            <p className="text-white/70">Waiting for the host to pick the next game…</p>
+            <p className="text-white/70">Waiting for the host to start the next game…</p>
           )}
         </div>
       )}
