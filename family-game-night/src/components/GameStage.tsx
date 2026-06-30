@@ -16,7 +16,7 @@ export function GameStage({
   players: Player[];
   isHost: boolean;
 }) {
-  const { view, error, pending, send, info } = useGameView(game, me.id);
+  const { view, error, pending, send } = useGameView(game, me.id);
   const View = getGameView(game.game_type);
 
   if (!View) {
@@ -50,10 +50,6 @@ export function GameStage({
         error={error}
         isHost={isHost}
       />
-      {/* Diagnostic strip — shows exactly what each tap does. */}
-      <div className="mt-3 break-all rounded-xl bg-black/30 px-3 py-2 text-center font-mono text-[11px] text-white/70">
-        me …{me.id.slice(-5)} · seated:{seated ? "Y" : "N"} · {pending ? "SENDING" : "idle"} · {info}
-      </div>
     </div>
   );
 }
