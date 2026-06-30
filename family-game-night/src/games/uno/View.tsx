@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { GameViewProps } from "@/games/viewTypes";
 import type { UnoCard, UnoColor } from "@/games/uno/logic";
+import { Fireworks } from "@/components/Fireworks";
+import { playSound } from "@/lib/sound";
 
 const COLOR_BG: Record<string, string> = {
   red: "bg-red-500",
@@ -110,6 +112,25 @@ export function UnoView({ view, me, send, pending, players }: GameViewProps) {
   const nameOf = (id: string) => v.players.find((p) => p.id === id)?.name ?? "Player";
   const hand = sortHand(v.hand);
 
+  // Play sounds on real state changes (covers both your and opponents' moves).
+  const prev = useRef<{ topId: string; myTurn: boolean; finished: boolean; unoCount: number } | null>(null);
+  useEffect(() => {
+    if (!v?.top) return;
+    const unoCount = v.players.filter((p) => p.saidUno).length;
+    const p = prev.current;
+    if (p) {
+      if (v.finished && !p.finished) {
+        playSound(v.winnerId === me.id ? "win" : "lose");
+      } else if (v.top.id !== p.topId) {
+        const k = v.top.kind;
+        playSound(k === "skip" || k === "reverse" || k === "draw2" || k === "wild4" ? "special" : "play");
+      }
+      if (myTurn && !p.myTurn && !v.finished) playSound("turn");
+      if (unoCount > p.unoCount) playSound("uno");
+    }
+    prev.current = { topId: v.top.id, myTurn, finished: v.finished, unoCount };
+  }, [v, myTurn, me.id]);
+
   function play(card: UnoCard) {
     if (card.color === "wild") {
       setPendingWild(card.id);
@@ -163,7 +184,14 @@ export function UnoView({ view, me, send, pending, players }: GameViewProps) {
           {v.direction === 1 ? "↻" : "↺"}
         </span>
 
-        <button className="flex flex-col items-center disabled:opacity-60" disabled={!myTurn || pending} onClick={() => send({ type: "draw" })}>
+        <button
+          className="flex flex-col items-center disabled:opacity-60"
+          disabled={!myTurn || pending}
+          onClick={() => {
+            playSound("draw");
+            send({ type: "draw" });
+          }}
+        >
           <CardBack />
           <span className="mt-1 text-xs font-bold text-white/80">Draw · {v.drawPileCount}</span>
         </button>
@@ -279,7 +307,8 @@ export function UnoView({ view, me, send, pending, players }: GameViewProps) {
       {/* winner celebration */}
       {v.finished && (
         <div className="fixed inset-0 z-30 grid place-items-center bg-black/70 p-6">
-          <div className="animate-pop card-surface px-8 py-10 text-center">
+          <Fireworks />
+          <div className="animate-pop card-surface relative z-40 px-8 py-10 text-center">
             <div className="animate-bounce text-7xl">🏆</div>
             <div className="mt-3 text-3xl font-extrabold text-sunny">
               {v.winnerId === me.id ? "You win! 🎉" : `${nameOf(v.winnerId ?? "")} wins!`}

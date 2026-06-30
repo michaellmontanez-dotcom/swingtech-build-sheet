@@ -10,6 +10,7 @@ import { InvitePanel } from "@/components/InvitePanel";
 import { PlayerList } from "@/components/PlayerList";
 import { GamePicker } from "@/components/GamePicker";
 import { GameStage } from "@/components/GameStage";
+import { SoundToggle } from "@/components/SoundToggle";
 
 export default function RoomPage({ params }: { params: { code: string } }) {
   const router = useRouter();
@@ -76,7 +77,10 @@ export default function RoomPage({ params }: { params: { code: string } }) {
     <main className="mx-auto flex min-h-full max-w-md flex-col gap-4 px-4 py-5">
       {/* header */}
       <div className="flex items-center justify-between">
-        <button onClick={() => router.push("/")} className="text-2xl">🏠</button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => router.push("/")} className="text-2xl">🏠</button>
+          <SoundToggle />
+        </div>
         <div className="text-center">
           <div className="text-xs uppercase tracking-wide text-white/50">Room</div>
           <div className="text-xl font-extrabold tracking-[0.25em] text-sunny">{code}</div>

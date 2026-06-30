@@ -7,7 +7,7 @@ const ID_KEY = "gn_player_id";
 const NAME_KEY = "gn_player_name";
 const EMOJI_KEY = "gn_player_emoji";
 
-export const EMOJIS = ["🦊", "🐼", "🐸", "🦄", "🐙", "🐲", "🦁", "🐯", "🐧", "🐳", "🌟", "🚀", "🎸", "🍕", "🎩", "👾"];
+export const EMOJIS = ["🦍", "🐔", "🦊", "🐼", "🐸", "🦄", "🐙", "🐲", "🦁", "🐯", "🐧", "🐳", "🌟", "🚀", "🎸", "🍕", "🎩", "👾"];
 
 function randomId(): string {
   if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
