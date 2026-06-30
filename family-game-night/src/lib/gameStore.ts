@@ -1,7 +1,13 @@
 import "server-only";
 import { getServiceSupabase } from "@/lib/supabase/server";
 import { createInitialState, processMove, viewFor } from "@/lib/gamePipeline";
+import { getGameModule } from "@/games/registry";
+import { pushToPlayer } from "@/lib/push";
 import type { Move, PlayerInfo } from "@/games/types";
+
+function activeIdOf(view: unknown): string | null {
+  return (view as { activePlayerId?: string })?.activePlayerId ?? null;
+}
 
 // The full authoritative state (including all secrets) is stored in the
 // RLS-locked `hands` table under this reserved key. Anon phones cannot read it;
@@ -95,6 +101,20 @@ export async function applyMove(gameId: string, playerId: string, move: Move): P
   if (outcome.gameOver) {
     const { data: g } = await db.from("games").select("room_id").eq("id", gameId).single();
     if (g) await db.from("rooms").update({ status: "finished" }).eq("id", g.room_id);
+  } else {
+    // Buzz the player whose turn it just became (best-effort; only shows on
+    // their phone if the app is backgrounded — see the service worker).
+    const prevActive = activeIdOf(viewFor(loaded.gameType, loaded.state, null));
+    const nextActive = activeIdOf(outcome.publicView);
+    if (nextActive && nextActive !== prevActive && nextActive !== playerId) {
+      const mod = getGameModule(loaded.gameType);
+      await pushToPlayer(nextActive, {
+        title: "Your turn! 🎲",
+        body: `It's your move in ${mod?.name ?? "Game Night"}.`,
+        url: "/",
+        tag: `turn-${gameId}`,
+      }).catch(() => {});
+    }
   }
 
   return { ok: true, version: newVersion, view: outcome.viewFor!(playerId), gameOver: outcome.gameOver };

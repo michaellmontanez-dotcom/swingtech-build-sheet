@@ -11,6 +11,7 @@ import { PlayerList } from "@/components/PlayerList";
 import { GamePicker } from "@/components/GamePicker";
 import { GameStage } from "@/components/GameStage";
 import { SoundToggle } from "@/components/SoundToggle";
+import { TurnAlerts } from "@/components/TurnAlerts";
 
 export default function RoomPage({ params }: { params: { code: string } }) {
   const router = useRouter();
@@ -94,6 +95,7 @@ export default function RoomPage({ params }: { params: { code: string } }) {
         <div className="flex items-center gap-2">
           <button onClick={() => router.push("/")} className="text-2xl">🏠</button>
           <SoundToggle />
+          <TurnAlerts playerId={me.id} roomId={room.id} name={me.name} />
         </div>
         <div className="text-center">
           <div className="text-xs uppercase tracking-wide text-white/50">Room</div>
