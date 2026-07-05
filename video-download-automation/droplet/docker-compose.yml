@@ -1,0 +1,41 @@
+# n8n behind Caddy (auto-HTTPS) on the DigitalOcean droplet (198.211.114.184).
+# n8n is NEVER exposed directly — only Caddy binds public 80/443.
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - n8n
+
+  n8n:
+    image: n8nio/n8n:latest
+    restart: unless-stopped
+    # Bound to loopback only — reachable via Caddy, not from the public internet.
+    expose:
+      - "5678"
+    environment:
+      - N8N_HOST=${N8N_HOST}
+      - N8N_PROTOCOL=https
+      - WEBHOOK_URL=https://${N8N_HOST}/
+      - N8N_PORT=5678
+      - N8N_EDITOR_BASE_URL=https://${N8N_HOST}/
+      # Editor login (Caddy also enforces its own basic-auth in front).
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+      - GENERIC_TIMEZONE=America/New_York
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+volumes:
+  caddy_data:
+  caddy_config:
+  n8n_data:

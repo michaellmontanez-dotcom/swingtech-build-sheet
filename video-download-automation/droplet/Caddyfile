@@ -1,0 +1,9 @@
+# Requires a DNS name pointing at 198.211.114.184 (e.g. n8n.yourdomain.com) so
+# Caddy can get a Let's Encrypt cert. If you truly have no domain, replace the
+# site line with `:443` and `tls internal` for a self-signed cert (browsers warn,
+# and Telegram webhooks require a valid public cert — so a real domain is strongly
+# preferred; see README).
+{$N8N_HOST} {
+	encode gzip
+	reverse_proxy n8n:5678
+}

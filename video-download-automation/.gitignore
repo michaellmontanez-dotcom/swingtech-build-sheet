@@ -1,0 +1,5 @@
+# Secrets & local state — never commit these
+**/.env
+mac-agent/node_modules/
+droplet/.env
+*.log

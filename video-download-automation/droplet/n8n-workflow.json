@@ -1,0 +1,110 @@
+{
+  "name": "SwingTECH Video Downloader (ingress)",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": ["message"],
+        "additionalFields": {}
+      },
+      "id": "trigger-telegram",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [220, 300],
+      "webhookId": "swingtech-video-ingress"
+    },
+    {
+      "parameters": {
+        "jsCode": "// EDIT THIS LIST: your numeric Telegram user id(s). Message @userinfobot to get yours.\nconst ALLOWED_USER_IDS = [\"REPLACE_WITH_YOUR_TELEGRAM_ID\"];\n\nconst root = $input.first().json;\nconst msg = root.message || root.channel_post || {};\nconst from = msg.from || {};\nconst chatId = (msg.chat && msg.chat.id) || from.id;\nconst senderId = String(from.id || '');\nconst text = msg.text || msg.caption || '';\n\n// Silently ignore anyone not on the allow-list — the whole internet can DM a bot.\nif (!ALLOWED_USER_IDS.includes(senderId)) {\n  return [];\n}\n\nconst HOSTS = ['youtube.com','youtu.be','m.youtube.com','music.youtube.com','facebook.com','fb.watch','m.facebook.com'];\nconst urls = [];\nfor (const m of (text.match(/https?:\\/\\/[^\\s]+/gi) || [])) {\n  try {\n    const h = new URL(m).hostname.replace(/^www\\./,'').toLowerCase();\n    if (HOSTS.includes(h) || h.endsWith('.fbcdn.net')) urls.push(m.replace(/[)\\].,]+$/,''));\n  } catch (e) {}\n}\n\nif (!urls.length) {\n  return [{ json: { valid: false, chatId, reason: \"No supported YouTube/Facebook link found in your message.\" } }];\n}\n\nreturn urls.map(url => ({ json: { valid: true, chatId, senderId, url, source: 'telegram' } }));"
+      },
+      "id": "code-validate",
+      "name": "Validate & extract",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "strict", "version": 2 },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "cond-valid",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "if-valid",
+      "name": "Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://YOUR-PROJECT.supabase.co/rest/v1/video_jobs",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "REPLACE_SUPABASE_SERVICE_ROLE_KEY" },
+            { "name": "Authorization", "value": "Bearer REPLACE_SUPABASE_SERVICE_ROLE_KEY" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=minimal" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"source\": \"{{ $json.source }}\",\n  \"chat_id\": \"{{ $json.chatId }}\",\n  \"sender_id\": \"{{ $json.senderId }}\",\n  \"url\": \"{{ $json.url }}\"\n}",
+        "options": {}
+      },
+      "id": "http-insert",
+      "name": "Insert job (Supabase)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [940, 200]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Validate & extract').item.json.chatId }}",
+        "text": "=⏳ Queued: {{ $('Validate & extract').item.json.url }}",
+        "additionalFields": { "appendAttribution": false }
+      },
+      "id": "tg-queued",
+      "name": "Reply: queued",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1180, 200]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ $json.reason }}",
+        "additionalFields": { "appendAttribution": false }
+      },
+      "id": "tg-nolink",
+      "name": "Reply: no link",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [940, 420]
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": { "main": [[{ "node": "Validate & extract", "type": "main", "index": 0 }]] },
+    "Validate & extract": { "main": [[{ "node": "Valid?", "type": "main", "index": 0 }]] },
+    "Valid?": {
+      "main": [
+        [{ "node": "Insert job (Supabase)", "type": "main", "index": 0 }],
+        [{ "node": "Reply: no link", "type": "main", "index": 0 }]
+      ]
+    },
+    "Insert job (Supabase)": { "main": [[{ "node": "Reply: queued", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

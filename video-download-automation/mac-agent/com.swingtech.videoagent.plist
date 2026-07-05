@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Placeholders (__NODE__/__DIR__/__HOME__) are filled in by install.sh. -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.swingtech.videoagent</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>__NODE__</string>
+    <string>__DIR__/agent.js</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>__DIR__</string>
+
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>__HOME__/Library/Logs/swingtech-video-agent.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>__HOME__/Library/Logs/swingtech-video-agent.err.log</string>
+
+  <key>ProcessType</key>
+  <string>Background</string>
+</dict>
+</plist>
