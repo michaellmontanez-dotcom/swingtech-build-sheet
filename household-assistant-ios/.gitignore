@@ -1,0 +1,16 @@
+# Secrets — never commit real keys
+HouseholdAssistant/Resources/Secrets.xcconfig
+
+# XcodeGen output (regenerate with `xcodegen generate`)
+*.xcodeproj
+
+# Xcode / macOS
+xcuserdata/
+DerivedData/
+build/
+*.xcuserstate
+.DS_Store
+
+# Swift Package Manager
+.swiftpm/
+.build/
